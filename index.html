@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mô Phỏng Quỹ Đạo Mặt Trời 3D</title>
+  
+  <!-- Thư viện Three.js để dựng 3D -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <!-- OrbitControls để xoay camera mượt mà -->
+  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+  <!-- Thư viện SunCalc để tính toán thiên văn -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/suncalc/1.9.0/suncalc.min.js"></script>
+
+  <style>
+    body {
+      margin: 0;
+      overflow: hidden;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background-color: #87CEEB; /* Màu bầu trời */
+    }
+    #canvas-container {
+      width: 100vw;
+      height: 100vh;
+      display: block;
+    }
+    #ui-panel {
+      position: absolute;
+      top: 20px;
+      right: 20px;
+      width: 320px;
+      background: rgba(255, 255, 255, 0.9);
+      backdrop-filter: blur(10px);
+      padding: 20px;
+      border-radius: 12px;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.2);
+      color: #333;
+    }
+    h2 { margin-top: 0; font-size: 1.2rem; color: #222; }
+    .control-group { margin-bottom: 15px; }
+    label { display: block; font-weight: 600; margin-bottom: 5px; font-size: 0.9rem; }
+    input[type="range"], input[type="date"] {
+      width: 100%;
+      box-sizing: border-box;
+      padding: 5px;
+    }
+    .metrics {
+      background: #f4f6f9;
+      padding: 10px;
+      border-radius: 8px;
+      font-size: 0.85rem;
+      line-height: 1.5;
+    }
+    .legend {
+      margin-top: 15px;
+      font-size: 0.8rem;
+    }
+    .legend div { display: flex; align-items: center; margin-bottom: 4px; }
+    .color-box { width: 12px; height: 12px; margin-right: 8px; border-radius: 2px;}
+  </style>
+</head>
+<body>
+
+  <div id="canvas-container"></div>
+
+  <div id="ui-panel">
+    <h2>Trục Thời Gian Mặt Trời (Solar Timeline)</h2>
+    
+    <div class="control-group">
+      <label for="date-input">Ngày trong năm:</label>
+      <input type="date" id="date-input">
+    </div>
+
+    <div class="control-group">
+      <label for="time-slider">Thời gian trong ngày: <span id="time-display">12:00</span></label>
+      <!-- Giá trị từ 0 đến 1440 phút (24 giờ) -->
+      <input type="range" id="time-slider" min="0" max="1440" value="720">
+    </div>
+
+    <div class="metrics">
+      <div><strong>Tọa độ:</strong> Vĩ độ 10.77°, Kinh độ 106.70° (TP.HCM)</div>
+      <div><strong>Góc nghiêng (Altitude):</strong> <span id="val-alt">0</span>°</div>
+      <div><strong>Góc phương vị (Azimuth):</strong> <span id="val-az">0</span>°</div>
+    </div>
+
+    <div class="legend">
+      <strong>Chú giải quỹ đạo (Sun Paths):</strong>
+      <div><span class="color-box" style="background: #ff5722;"></span> Hạ chí (Tháng 6 - Cao nhất)</div>
+      <div><span class="color-box" style="background: #4caf50;"></span> Xuân/Thu phân (Tháng 3, 9)</div>
+      <div><span class="color-box" style="background: #2196f3;"></span> Đông chí (Tháng 12 - Thấp nhất)</div>
+    </div>
+  </div>
+
+  <script>
+    // --- 1. CẤU HÌNH BAN ĐẦU ---
+    const LAT = 10.7769; // Vĩ độ TP.HCM
+    const LON = 106.7009; // Kinh độ TP.HCM
+    const SUN_RADIUS = 50; // Bán kính vòm trời
+
+    // Khởi tạo ngày hiện tại
+    let currentDate = new Date();
+    document.getElementById('date-input').value = currentDate.toISOString().split('T')[0];
+
+    // --- 2. THIẾT LẬP THREE.JS SCENE ---
+    const scene = new THREE.Scene();
+    const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
+    camera.position.set(40, 20, 60);
+
+    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.shadowMap.enabled = true; // Bật bóng đổ
+    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    document.getElementById('canvas-container').appendChild(renderer.domElement);
+
+    const controls = new THREE.OrbitControls(camera, renderer.domElement);
+    controls.enableDamping = true;
+    controls.dampingFactor = 0.05;
+    controls.maxPolarAngle = Math.PI / 2 + 0.1; // Cho phép nhìn xuống một chút dưới mặt đất
+
+    // --- 3. DỰNG MÔI TRƯỜNG & ĐỐI TƯỢNG ---
+    
+    // Mặt đất
+    const groundGeo = new THREE.CylinderGeometry(SUN_RADIUS, SUN_RADIUS, 0.5, 64);
+    const groundMat = new THREE.MeshStandardMaterial({ color: 0x4a7c59, roughness: 0.8 });
+    const ground = new THREE.Mesh(groundGeo, groundMat);
+    ground.position.y = -0.25;
+    ground.receiveShadow = true;
+    scene.add(ground);
+
+    // Lưới la bàn (Compass)
+    const gridHelper = new THREE.PolarGridHelper(SUN_RADIUS, 16, 8, 64, 0x000000, 0x999999);
+    gridHelper.position.y = 0.01;
+    scene.add(gridHelper);
+
+    // Người đứng ở trung tâm (Người quan sát)
+    const personGeo = new THREE.CylinderGeometry(0.5, 0.5, 4, 16);
+    const personMat = new THREE.MeshStandardMaterial({ color: 0x333333 });
+    const person = new THREE.Mesh(personGeo, personMat);
+    person.position.y = 2; // Nửa chiều cao để đứng trên mặt đất
+    person.castShadow = true;
+    scene.add(person);
+
+    // Trục hướng (Bắc, Nam, Đông, Tây)
+    // Three.js mặc định: Z âm là Bắc, Z dương là Nam, X dương là Đông, X âm là Tây.
+    function addCompassLabel(text, position) {
+      const canvas = document.createElement('canvas');
+      // Mở rộng chiều rộng của canvas để chứa đủ các từ "Đông", "Bắc"...
+      canvas.width = 128; 
+      canvas.height = 64;
+      const ctx = canvas.getContext('2d');
+      
+      // Đổ bóng chữ để dễ đọc hơn trên nền sáng
+      ctx.shadowColor = "rgba(0, 0, 0, 0.8)";
+      ctx.shadowBlur = 4;
+      ctx.shadowOffsetX = 2;
+      ctx.shadowOffsetY = 2;
+
+      ctx.fillStyle = 'white';
+      ctx.font = 'Bold 32px Arial';
+      ctx.textAlign = 'center';
+      ctx.fillText(text, 64, 45); // Căn giữa chữ vào canvas mới
+      
+      const texture = new THREE.CanvasTexture(canvas);
+      const spriteMat = new THREE.SpriteMaterial({ map: texture, depthTest: false });
+      const sprite = new THREE.Sprite(spriteMat);
+      sprite.position.copy(position);
+      // Điều chỉnh tỷ lệ (scale) thành hình chữ nhật thay vì hình vuông
+      sprite.scale.set(10, 5, 1); 
+      scene.add(sprite);
+    }
+
+    addCompassLabel('Bắc', new THREE.Vector3(0, 1, -SUN_RADIUS + 3)); // Z âm là Bắc
+    addCompassLabel('Nam', new THREE.Vector3(0, 1, SUN_RADIUS - 3));  // Z dương là Nam
+    addCompassLabel('Đông', new THREE.Vector3(SUN_RADIUS - 3, 1, 0));  // X dương là Đông
+    addCompassLabel('Tây', new THREE.Vector3(-SUN_RADIUS + 3, 1, 0)); // X âm là Tây
+
+    // Mặt trời và Ánh sáng
+    const sunGeo = new THREE.SphereGeometry(3, 32, 32);
+    const sunMat = new THREE.MeshBasicMaterial({ color: 0xffdd44 });
+    const sunMesh = new THREE.Mesh(sunGeo, sunMat);
+    scene.add(sunMesh);
+
+    // Ánh sáng tạo bóng đổ (Directional Light)
+    const sunLight = new THREE.DirectionalLight(0xffffff, 1.5);
+    sunLight.castShadow = true;
+    sunLight.shadow.mapSize.width = 2048;
+    sunLight.shadow.mapSize.height = 2048;
+    sunLight.shadow.camera.near = 0.5;
+    sunLight.shadow.camera.far = 150;
+    sunLight.shadow.camera.left = -50;
+    sunLight.shadow.camera.right = 50;
+    sunLight.shadow.camera.top = 50;
+    sunLight.shadow.camera.bottom = -50;
+    scene.add(sunLight);
+
+    // Ánh sáng môi trường (để phần bóng không bị đen kịt)
+    const ambientLight = new THREE.AmbientLight(0x404040, 0.6);
+    scene.add(ambientLight);
+
+    // --- 4. HÀM TÍNH TOÁN & VẼ QUỸ ĐẠO MẶT TRỜI ---
+
+    // Hàm chuyển đổi (Azimuth, Altitude) sang tọa độ Cartesian (X, Y, Z) của Three.js
+    function getSunPosition(date) {
+      const pos = SunCalc.getPosition(date, LAT, LON);
+      // pos.azimuth: 0 là Nam, dương đi về Tây, âm đi về Đông.
+      // pos.altitude: 0 là chân trời, PI/2 là đỉnh đầu.
+      const phi = pos.altitude;
+      const theta = pos.azimuth;
+
+      // Ánh xạ sang hệ tọa độ Three.js: Z dương = Nam, X âm = Tây
+      const z = SUN_RADIUS * Math.cos(phi) * Math.cos(theta);
+      const x = SUN_RADIUS * Math.cos(phi) * -Math.sin(theta);
+      const y = SUN_RADIUS * Math.sin(phi);
+
+      return { x, y, z, altitude: phi, azimuth: theta };
+    }
+
+    // Vẽ đường đi của mặt trời trong 1 ngày cụ thể
+    function drawSunPath(dateStr, color) {
+      const points = [];
+      const baseDate = new Date(dateStr);
+      
+      // Chạy từ 0h đến 24h để lấy các điểm quỹ đạo
+      for (let i = 0; i <= 24 * 60; i += 10) { // Mỗi 10 phút 1 điểm
+        const d = new Date(baseDate);
+        d.setHours(0, i, 0, 0);
+        const pos = getSunPosition(d);
+        if (pos.y >= -2) { // Chỉ vẽ phần quỹ đạo trên (hoặc mấp mé) mặt đất
+          points.push(new THREE.Vector3(pos.x, pos.y, pos.z));
+        }
+      }
+      const geo = new THREE.BufferGeometry().setFromPoints(points);
+      const mat = new THREE.LineBasicMaterial({ color: color, linewidth: 2, transparent: true, opacity: 0.6 });
+      scene.add(new THREE.Line(geo, mat));
+    }
+
+    // Vẽ 3 quỹ đạo chuẩn (Hạ chí, Xuân/Thu phân, Đông chí)
+    const currentYear = currentDate.getFullYear();
+    drawSunPath(`${currentYear}-06-21`, 0xff5722); // Hạ chí (Cao nhất)
+    drawSunPath(`${currentYear}-03-21`, 0x4caf50); // Xuân phân (Trung bình)
+    drawSunPath(`${currentYear}-12-21`, 0x2196f3); // Đông chí (Thấp nhất)
+
+    // --- 5. TƯƠNG TÁC UI & CẬP NHẬT THỜI GIAN THỰC ---
+    
+    function updateScene() {
+      // Lấy ngày từ input
+      const dateVal = document.getElementById('date-input').value;
+      const timeVal = parseInt(document.getElementById('time-slider').value); // Phút
+      
+      const hours = Math.floor(timeVal / 60);
+      const minutes = timeVal % 60;
+      
+      // Hiển thị thời gian lên UI
+      document.getElementById('time-display').innerText = 
+        `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
+
+      // Tạo object Date hiện tại
+      const targetDate = new Date(dateVal);
+      targetDate.setHours(hours, minutes, 0, 0);
+
+      // Tính toán
+      const pos = getSunPosition(targetDate);
+
+      // Di chuyển Sun Mesh & Light
+      sunMesh.position.set(pos.x, pos.y, pos.z);
+      sunLight.position.set(pos.x, pos.y, pos.z);
+
+      // Ẩn mặt trời/ánh sáng nếu nằm dưới đường chân trời (tối)
+      if (pos.y < 0) {
+        sunMesh.material.opacity = 0;
+        sunMesh.material.transparent = true;
+        sunLight.intensity = 0;
+        scene.background = new THREE.Color(0x050d1a); // Bầu trời đêm
+      } else {
+        sunMesh.material.opacity = 1;
+        sunLight.intensity = 1.5;
+        // Chuyển màu bầu trời dựa vào độ cao mặt trời (bình minh/hoàng hôn)
+        const skyColor = new THREE.Color().lerpColors(new THREE.Color(0xff7b54), new THREE.Color(0x87CEEB), Math.min(pos.y / 20, 1));
+        scene.background = skyColor;
+      }
+
+      // Cập nhật thông số lên UI (Radian -> Độ)
+      const altDeg = (pos.altitude * 180 / Math.PI).toFixed(2);
+      // Quy đổi góc phương vị chuẩn (0 là Bắc, xoay chiều kim đồng hồ)
+      let azDeg = (pos.azimuth * 180 / Math.PI) + 180; 
+      azDeg = azDeg.toFixed(2);
+
+      document.getElementById('val-alt').innerText = altDeg;
+      document.getElementById('val-az').innerText = azDeg;
+    }
+
+    // Lắng nghe sự kiện kéo slider hoặc đổi ngày
+    document.getElementById('time-slider').addEventListener('input', updateScene);
+    document.getElementById('date-input').addEventListener('change', updateScene);
+
+    // Cập nhật lần đầu
+    updateScene();
+
+    // --- 6. RENDER LOOP (ANIMATION) ---
+    function animate() {
+      requestAnimationFrame(animate);
+      controls.update(); // Cập nhật chuyển động xoay camera
+      renderer.render(scene, camera);
+    }
+    animate();
+
+    // Xử lý khi người dùng resize cửa sổ trình duyệt
+    window.addEventListener('resize', () => {
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(window.innerWidth, window.innerHeight);
+    });
+
+  </script>
+</body>
+</html>
