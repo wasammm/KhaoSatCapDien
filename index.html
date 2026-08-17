@@ -1,611 +1,438 @@
 <!DOCTYPE html>
 <html lang="vi">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Phương Án Cung Cấp Điện - Điện lực Rạch Giá</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <style>
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f3f4f6; }
-        .glass-panel { background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(10px); border-radius: 12px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06); }
-        
-        /* Canvas Styling */
-        #canvasWrapper { width: 100%; overflow-x: auto; background: #e5e7eb; border-radius: 8px; border: 2px solid #d1d5db; }
-        #canvasContainer { position: relative; width: 800px; height: 500px; background-color: #fff; background-size: cover; background-position: center; cursor: crosshair; margin: 0 auto; }
-        #sketchCanvas { position: absolute; top: 0; left: 0; z-index: 10; }
-        
-        .tool-btn { transition: all 0.2s ease; }
-        .tool-btn.active { background-color: #2563eb; color: white; border-color: #2563eb; }
-        
-        /* Signature styling */
-        .sig-container { border: 2px dashed #cbd5e1; border-radius: 8px; background: #f8fafc; }
-        .sig-canvas { width: 100%; height: 120px; cursor: crosshair; }
-        
-        /* Status badge */
-        .status-nhap { background: #f3f4f6; color: #4b5563; }
-        .status-choduyet { background: #fef3c7; color: #d97706; }
-        .status-daduyet { background: #d1fae5; color: #059669; }
-        .status-tuchoi { background: #fee2e2; color: #dc2626; }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Khảo Sát Cấp Điện - Điện Lực Rạch Giá</title>
+  
+  <!-- Supabase JS Client v2 -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  
+  <!-- Styling cơ bản & Hỗ trợ In ấn -->
+  <style>
+    :root {
+      --primary-color: #0056b3;
+      --border-color: #ccc;
+      --bg-light: #f8f9fa;
+    }
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 15px;
+      background-color: #f4f6f9;
+      color: #333;
+    }
+    .container {
+      max-width: 900px;
+      margin: 0 auto;
+      background: #fff;
+      padding: 20px 30px;
+      border-radius: 8px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+    /* Letterhead / Tiêu đề đơn vị */
+    .letterhead {
+      display: flex;
+      justify-content: space-between;
+      text-align: center;
+      border-bottom: 2px solid #000;
+      padding-bottom: 10px;
+      margin-bottom: 20px;
+    }
+    .letterhead h4, .letterhead h5 { margin: 3px 0; }
+    
+    .form-group {
+      margin-bottom: 15px;
+    }
+    .form-group label {
+      display: block;
+      font-weight: bold;
+      margin-bottom: 5px;
+    }
+    .form-control {
+      width: 100%;
+      padding: 8px;
+      box-sizing: border-box;
+      border: 1px solid var(--border-color);
+      border-radius: 4px;
+    }
+    .grid-2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 15px;
+    }
+    
+    /* Canvas Area */
+    .canvas-container {
+      border: 1px solid var(--border-color);
+      background-color: #fff;
+      margin-top: 5px;
+      touch-action: none;
+    }
+    canvas {
+      display: block;
+      cursor: crosshair;
+    }
+    
+    /* Buttons */
+    .btn-group {
+      display: flex;
+      gap: 10px;
+      margin-top: 20px;
+    }
+    .btn {
+      padding: 10px 18px;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-weight: bold;
+      color: #fff;
+    }
+    .btn-primary { background-color: #0056b3; }
+    .btn-success { background-color: #28a745; }
+    .btn-danger { background-color: #dc3545; }
+    .btn-secondary { background-color: #6c757d; }
+
+    /* Tables */
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 20px;
+    }
+    table, th, td { border: 1px solid #ddd; }
+    th, td { padding: 10px; text-align: left; }
+    th { background-color: var(--bg-light); }
+
+    /* CSS Khi In (Print Style) */
+    @media print {
+      .no-print { display: none !important; }
+      body { background: #fff; padding: 0; }
+      .container { box-shadow: none; border: none; width: 100%; max-width: 100%; }
+    }
+  </style>
 </head>
-<body class="text-gray-800 antialiased p-4 md:p-8">
+<body>
 
-    <div class="max-w-6xl mx-auto space-y-6">
-        <!-- Header -->
-        <header class="glass-panel p-6 flex flex-col md:flex-row justify-between items-center border-t-4 border-blue-600">
-            <div class="flex items-center gap-4 mb-4 md:mb-0">
-                <div class="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center text-blue-600 text-3xl">
-                    <i class="fa-solid fa-bolt"></i>
-                </div>
-                <div>
-                    <h1 class="text-2xl font-bold text-gray-900">Phương Án Cung Cấp Điện</h1>
-                    <p class="text-gray-500">Công ty Điện lực An Giang - Điện lực Rạch Giá</p>
-                </div>
-            </div>
-            
-            <div class="flex flex-col items-end gap-2">
-                <div class="flex items-center gap-3">
-                    <span class="text-sm font-medium text-gray-600">Vai trò hiện tại:</span>
-                    <span id="currentRoleBadge" class="px-3 py-1 bg-blue-100 text-blue-700 font-bold rounded-full text-sm">Nhân viên</span>
-                    <button onclick="switchRole()" class="text-sm text-blue-600 hover:underline"><i class="fa-solid fa-right-left"></i> Đổi</button>
-                </div>
-                <div class="flex items-center gap-2 mt-2">
-                    <span class="text-sm font-medium">Trạng thái hồ sơ:</span>
-                    <span id="docStatus" class="px-3 py-1 rounded-full text-sm font-bold status-nhap">Bản Nháp</span>
-                </div>
-            </div>
-        </header>
+<div class="container">
+  <!-- THÔNG TIN ĐƠN VỊ & QUỐC HIỆU -->
+  <div class="letterhead">
+    <div>
+      <h5>CÔNG TY ĐIỆN LỰC AN GIANG</h5>
+      <h4>ĐIỆN LỰC RẠCH GIÁ</h4>
+    </div>
+    <div>
+      <h4>CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM</h4>
+      <h5>Độc lập - Tự do - Hạnh phúc</h5>
+    </div>
+  </div>
 
-        <!-- Main Form Content -->
-        <main class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            
-            <!-- Left Column: Form & Actions -->
-            <div class="space-y-6 lg:col-span-1">
-                <!-- Customer Info -->
-                <div class="glass-panel p-6">
-                    <h2 class="text-lg font-semibold mb-4 border-b pb-2"><i class="fa-regular fa-address-card mr-2"></i>Thông tin chung</h2>
-                    <div class="space-y-4">
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-1">Mã Phương Án</label>
-                            <input type="text" id="planId" readonly class="w-full bg-gray-100 border border-gray-300 rounded-md p-2 text-sm text-gray-500" value="">
-                        </div>
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-1">Tên khách hàng/Công trình</label>
-                            <input type="text" id="customerName" class="w-full border border-gray-300 rounded-md p-2 focus:ring-blue-500 focus:border-blue-500">
-                        </div>
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-1">Địa chỉ thi công</label>
-                            <textarea id="address" rows="2" class="w-full border border-gray-300 rounded-md p-2 focus:ring-blue-500 focus:border-blue-500"></textarea>
-                        </div>
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-1">Nhu cầu công suất (kW/kVA)</label>
-                            <input type="text" id="capacity" class="w-full border border-gray-300 rounded-md p-2 focus:ring-blue-500 focus:border-blue-500">
-                        </div>
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-1">Tọa độ GPS hiện trường</label>
-                            <div class="flex gap-2">
-                                <input type="text" id="gpsCoords" readonly placeholder="Chưa lấy tọa độ" class="w-full bg-gray-50 border border-gray-300 rounded-md p-2 text-sm">
-                                <button onclick="getLocation()" class="bg-blue-100 text-blue-700 px-3 py-2 rounded-md hover:bg-blue-200 transition" title="Lấy GPS">
-                                    <i class="fa-solid fa-location-crosshairs"></i>
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+  <h2 style="text-align: center; color: var(--primary-color);">BIÊN BẢN KHẢO SÁT CẤP ĐIỆN</h2>
 
-                <!-- Action Buttons -->
-                <div class="glass-panel p-6">
-                    <h2 class="text-lg font-semibold mb-4 border-b pb-2"><i class="fa-solid fa-server mr-2"></i>Hệ thống (Supabase)</h2>
-                    <div class="space-y-3">
-                        <button onclick="savePlan()" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-md shadow transition flex justify-center items-center gap-2">
-                            <i class="fa-solid fa-cloud-arrow-up"></i> Lưu phương án
-                        </button>
-                        <button onclick="loadPlans()" class="w-full bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 font-medium py-2 px-4 rounded-md shadow-sm transition flex justify-center items-center gap-2">
-                            <i class="fa-solid fa-cloud-arrow-down"></i> Tải danh sách đã lưu
-                        </button>
-                    </div>
-                    
-                    <!-- Manager Actions (Hidden by default) -->
-                    <div id="managerActions" class="mt-6 pt-4 border-t hidden">
-                        <h3 class="text-sm font-bold text-gray-700 mb-3 uppercase tracking-wider">Dành cho Tổ trưởng</h3>
-                        <div class="flex gap-2">
-                            <button onclick="updateStatus('Đã duyệt')" class="flex-1 bg-green-600 hover:bg-green-700 text-white font-medium py-2 px-2 rounded-md transition text-sm">
-                                <i class="fa-solid fa-check mr-1"></i> Phê duyệt
-                            </button>
-                            <button onclick="updateStatus('Từ chối')" class="flex-1 bg-red-600 hover:bg-red-700 text-white font-medium py-2 px-2 rounded-md transition text-sm">
-                                <i class="fa-solid fa-xmark mr-1"></i> Từ chối
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            </div>
+  <!-- THÔNG TIN TÀI KHOẢN -->
+  <div id="auth-section" class="no-print" style="background: var(--bg-light); padding: 10px; border-radius: 4px; margin-bottom: 20px;">
+    <span id="user-info">Đang kiểm tra đăng nhập...</span>
+    <button class="btn btn-secondary" style="float: right; padding: 4px 8px;" onclick="SurveyDB.logout()">Đăng xuất</button>
+  </div>
 
-            <!-- Right Column: Sketch & Signatures -->
-            <div class="space-y-6 lg:col-span-2">
-                
-                <!-- Map & Sketching Area -->
-                <div class="glass-panel p-6 flex flex-col">
-                    <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-4 gap-4">
-                        <h2 class="text-lg font-semibold"><i class="fa-solid fa-map mr-2"></i>Sơ đồ cấp điện</h2>
-                        
-                        <!-- Toolbar -->
-                        <div class="flex flex-wrap gap-2 p-1 bg-gray-100 rounded-lg border">
-                            <button onclick="setTool('pen')" id="btnTool-pen" class="tool-btn active px-3 py-1.5 rounded text-sm font-medium text-gray-600 bg-white shadow-sm" title="Vẽ tự do"><i class="fa-solid fa-pen"></i></button>
-                            <button onclick="setTool('line')" id="btnTool-line" class="tool-btn px-3 py-1.5 rounded text-sm font-medium text-gray-600 hover:bg-gray-200" title="Kẻ đường thẳng"><i class="fa-solid fa-minus"></i></button>
-                            <div class="w-px bg-gray-300 mx-1"></div>
-                            <button onclick="setTool('stamp_tram')" id="btnTool-stamp_tram" class="tool-btn px-3 py-1.5 rounded text-sm font-medium text-gray-600 hover:bg-gray-200" title="Chèn Trạm biến áp"><i class="fa-solid fa-charging-station text-red-500 mr-1"></i> Trạm</button>
-                            <button onclick="setTool('stamp_tru')" id="btnTool-stamp_tru" class="tool-btn px-3 py-1.5 rounded text-sm font-medium text-gray-600 hover:bg-gray-200" title="Chèn Trụ điện"><i class="fa-solid fa-torii-gate text-gray-700 mr-1"></i> Trụ</button>
-                            <button onclick="setTool('stamp_dienke')" id="btnTool-stamp_dienke" class="tool-btn px-3 py-1.5 rounded text-sm font-medium text-gray-600 hover:bg-gray-200" title="Chèn Điện kế"><i class="fa-solid fa-gauge text-blue-500 mr-1"></i> Đ.Kế</button>
-                            <div class="w-px bg-gray-300 mx-1"></div>
-                            <button onclick="clearCanvas()" class="px-3 py-1.5 rounded text-sm font-medium text-red-600 hover:bg-red-50" title="Xóa toàn bộ sơ đồ"><i class="fa-solid fa-trash-can"></i> Xóa</button>
-                        </div>
-                    </div>
-
-                    <!-- Map API Trigger -->
-                    <div class="mb-4 flex items-center justify-between bg-blue-50 p-3 rounded-md border border-blue-100">
-                        <span class="text-sm text-blue-800" id="mapStatusText">Chưa tải nền bản đồ.</span>
-                        <button onclick="loadMapBackground()" class="bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium py-1.5 px-4 rounded shadow-sm transition">
-                            <i class="fa-solid fa-satellite mr-1"></i> Tải ảnh Map tại vị trí GPS
-                        </button>
-                    </div>
-
-                    <!-- Canvas -->
-                    <div id="canvasWrapper">
-                        <div id="canvasContainer">
-                            <canvas id="sketchCanvas" width="800" height="500"></canvas>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Signatures -->
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div class="glass-panel p-6">
-                        <div class="flex justify-between items-center mb-2">
-                            <h3 class="font-semibold text-gray-700">Chữ ký Nhân viên</h3>
-                            <button onclick="clearSignature('nvCanvas')" class="text-xs text-red-500 hover:underline">Xóa ký</button>
-                        </div>
-                        <div class="sig-container relative">
-                            <canvas id="nvCanvas" class="sig-canvas w-full h-full"></canvas>
-                        </div>
-                        <input type="text" id="nvName" placeholder="Ghi rõ họ tên" class="mt-2 w-full border-b border-gray-300 outline-none p-1 text-center bg-transparent">
-                    </div>
-                    <div class="glass-panel p-6">
-                        <div class="flex justify-between items-center mb-2">
-                            <h3 class="font-semibold text-gray-700">Chữ ký Tổ trưởng</h3>
-                            <button onclick="clearSignature('ttCanvas')" class="text-xs text-red-500 hover:underline">Xóa ký</button>
-                        </div>
-                        <div class="sig-container relative">
-                            <!-- Overlay disable if not To Truong -->
-                            <div id="ttOverlay" class="absolute inset-0 bg-gray-100 bg-opacity-70 z-20 flex items-center justify-center rounded-md">
-                                <span class="text-sm text-gray-500 font-medium"><i class="fa-solid fa-lock mr-1"></i> Chờ duyệt</span>
-                            </div>
-                            <canvas id="ttCanvas" class="sig-canvas w-full h-full relative z-10"></canvas>
-                        </div>
-                        <input type="text" id="ttName" placeholder="Ghi rõ họ tên" readonly class="mt-2 w-full border-b border-gray-300 outline-none p-1 text-center bg-transparent">
-                    </div>
-                </div>
-
-            </div>
-        </main>
+  <!-- FORM KHẢO SÁT -->
+  <form id="survey-form">
+    <div class="grid-2">
+      <div class="form-group">
+        <label>Mã Phương Án:</label>
+        <input type="text" id="code" class="form-control" readonly placeholder="Tự động tạo khi lưu">
+      </div>
+      <div class="form-group">
+        <label>Tên Khách Hàng:</label>
+        <input type="text" id="customer_name" class="form-control" required placeholder="Nhập tên khách hàng">
+      </div>
     </div>
 
-    <!-- CẤU HÌNH API VÀ LOGIC JAVASCRIPT -->
-    <script>
-        // ==========================================
-        // 1. CẤU HÌNH API KEY (QUAN TRỌNG: BẠN CẦN THAY THẾ KEY CỦA BẠN VÀO ĐÂY)
-        // ==========================================
-        const GOOGLE_MAPS_API_KEY = 'YOUR_GOOGLE_MAPS_API_KEY'; 
-        const SUPABASE_URL = 'https://iqgyvwdhpgeybhzanwxb.supabase.co/rest/v1/'; // vd: https://xyz.supabase.co
-        const SUPABASE_ANON_KEY = 'sb_publishable_x7mVpG2y0zHungOp4TN5yA_X3Gb8Hfj';
-        
-        let supabase = null;
-        try {
-            if(SUPABASE_URL !== 'YOUR_SUPABASE_URL') {
-                supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-            }
-        } catch(e) { console.warn("Supabase init bypassed (using dummy keys)"); }
+    <div class="grid-2">
+      <div class="form-group">
+        <label>Số Điện Thoại:</label>
+        <input type="text" id="customer_phone" class="form-control" placeholder="Nhập SĐT">
+      </div>
+      <div class="form-group">
+        <label>Địa Chỉ Khảo Sát:</label>
+        <input type="text" id="address" class="form-control" placeholder="Số nhà, đường, phường/xã">
+      </div>
+    </div>
 
-        // ==========================================
-        // 2. BIẾN TOÀN CỤC & TRẠNG THÁI
-        // ==========================================
-        let currentRole = 'nhanvien'; // nhanvien | totruong
-        let currentStatus = 'Nháp'; 
-        let currentTool = 'pen'; // pen, line, stamp_tram, stamp_tru, stamp_dienke
-        
-        // Tạo ID ngẫu nhiên khi khởi tạo trang
-        document.getElementById('planId').value = "PA-" + Date.now().toString().slice(-6);
+    <div class="form-group">
+      <label>Yêu Cầu Trụ Đỡ:</label>
+      <select id="can_tru_do" class="form-control">
+        <option value="khong">Không cần trụ đỡ</option>
+        <option value="co">Có cần trụ đỡ</option>
+      </select>
+    </div>
 
-        // ==========================================
-        // 3. QUẢN LÝ VAI TRÒ
-        // ==========================================
-        function switchRole() {
-            if (currentRole === 'nhanvien') {
-                const pin = prompt("Vui lòng nhập mã PIN Tổ trưởng để chuyển đổi:");
-                if (pin === '2024') {
-                    currentRole = 'totruong';
-                    document.getElementById('currentRoleBadge').innerText = 'Tổ Trưởng';
-                    document.getElementById('currentRoleBadge').className = 'px-3 py-1 bg-purple-100 text-purple-700 font-bold rounded-full text-sm';
-                    document.getElementById('managerActions').classList.remove('hidden');
-                    document.getElementById('ttOverlay').classList.add('hidden');
-                    document.getElementById('ttName').removeAttribute('readonly');
-                    alert("Đã chuyển sang quyền Tổ trưởng!");
-                } else {
-                    if (pin !== null) alert("Mã PIN không chính xác!");
-                }
-            } else {
-                currentRole = 'nhanvien';
-                document.getElementById('currentRoleBadge').innerText = 'Nhân viên';
-                document.getElementById('currentRoleBadge').className = 'px-3 py-1 bg-blue-100 text-blue-700 font-bold rounded-full text-sm';
-                document.getElementById('managerActions').classList.add('hidden');
-                document.getElementById('ttOverlay').classList.remove('hidden');
-                document.getElementById('ttName').setAttribute('readonly', 'true');
-            }
-        }
+    <!-- SƠ ĐỒ VẼ CẤP ĐIỆN -->
+    <div class="form-group">
+      <label>Sơ Đồ Kỹ Thuật (Vẽ trên Canvas):</label>
+      <div class="canvas-container">
+        <canvas id="sketch-canvas" width="840" height="300"></canvas>
+      </div>
+      <button type="button" class="btn btn-secondary no-print" style="margin-top: 5px;" onclick="clearCanvas('sketch-canvas')">Xóa vẽ lại</button>
+    </div>
 
-        function updateStatus(newStatus) {
-            currentStatus = newStatus;
-            const badge = document.getElementById('docStatus');
-            badge.innerText = newStatus;
-            badge.className = 'px-3 py-1 rounded-full text-sm font-bold ' + 
-                (newStatus === 'Đã duyệt' ? 'status-daduyet' : 'status-tuchoi');
-            
-            if(newStatus === 'Đã duyệt') {
-                currentStatus = 'Approved'; // Logic ngầm
-                badge.innerText = 'Đã Phê Duyệt';
-            } else {
-                currentStatus = 'Rejected';
-            }
-        }
+    <!-- KHU VỰC CHỮ KÝ -->
+    <div class="grid-2" style="margin-top: 30px;">
+      <div>
+        <label>Chữ Ký Khách Hàng:</label>
+        <div class="canvas-container">
+          <canvas id="sig-customer-canvas" width="400" height="120"></canvas>
+        </div>
+        <button type="button" class="btn btn-secondary no-print" style="margin-top: 5px;" onclick="clearCanvas('sig-customer-canvas')">Xóa chữ ký</button>
+      </div>
+      <div>
+        <label>Chữ Ký Nhân Viên Khảo Sát:</label>
+        <div class="canvas-container">
+          <canvas id="sig-staff-canvas" width="400" height="120"></canvas>
+        </div>
+        <button type="button" class="btn btn-secondary no-print" style="margin-top: 5px;" onclick="clearCanvas('sig-staff-canvas')">Xóa chữ ký</button>
+      </div>
+    </div>
 
-        // ==========================================
-        // 4. CHỨC NĂNG GPS & GOOGLE MAPS BACKGROUND
-        // ==========================================
-        function getLocation() {
-            if (navigator.geolocation) {
-                document.getElementById('gpsCoords').value = "Đang định vị...";
-                navigator.geolocation.getCurrentPosition(
-                    (pos) => {
-                        document.getElementById('gpsCoords').value = `${pos.coords.latitude}, ${pos.coords.longitude}`;
-                    },
-                    (err) => { document.getElementById('gpsCoords').value = "Lỗi: " + err.message; },
-                    { enableHighAccuracy: true }
-                );
-            } else {
-                alert("Trình duyệt không hỗ trợ GPS.");
-            }
-        }
+    <!-- THAO TÁC FORM -->
+    <div class="btn-group no-print">
+      <button type="button" class="btn btn-secondary" onclick="handleSave(false)">Lưu Nháp</button>
+      <button type="button" class="btn btn-primary" onclick="handleSave(true)">Gửi Duyệt</button>
+      <button type="button" class="btn btn-success" onclick="window.print()">In Biên Bản</button>
+    </div>
+  </form>
 
-        function loadMapBackground() {
-            const statusEl = document.getElementById('mapStatusText');
-            if(GOOGLE_MAPS_API_KEY === 'YOUR_GOOGLE_MAPS_API_KEY') {
-                statusEl.innerText = "⚠️ Lỗi: Chưa cấu hình Google Maps API Key trong code.";
-                statusEl.className = "text-sm text-red-600 font-bold";
-                return;
-            }
+  <hr style="margin: 40px 0;" class="no-print">
 
-            if (!navigator.geolocation) {
-                statusEl.innerText = "Trình duyệt không hỗ trợ GPS.";
-                return;
-            }
+  <!-- DANH SÁCH PHƯƠNG ÁN (DÀNH CHO NHÂN VIÊN & TỔ TRƯỞNG) -->
+  <div class="no-print">
+    <h3>Danh Sách Phương Án Khảo Sát</h3>
+    <table>
+      <thead>
+        <tr>
+          <th>Mã PA</th>
+          <th>Khách Hàng</th>
+          <th>Địa Chỉ</th>
+          <th>Trạng Thái</th>
+          <th>Thao Tác</th>
+        </tr>
+      </thead>
+      <tbody id="plans-table-body">
+        <tr><td colspan="5" style="text-align: center;">Đang tải dữ liệu...</td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
 
-            statusEl.innerText = "Đang lấy tọa độ để tải bản đồ...";
-            navigator.geolocation.getCurrentPosition((position) => {
-                const lat = position.coords.latitude;
-                const lng = position.coords.longitude;
-                statusEl.innerText = `Đã lấy tọa độ (${lat.toFixed(4)}, ${lng.toFixed(4)}). Đang tải ảnh...`;
-                
-                // Cập nhật input GPS luôn
-                document.getElementById('gpsCoords').value = `${lat}, ${lng}`;
+<!-- KỊCH BẢN XỬ LÝ SUPABASE & GIAO DIỆN -->
+<script>
+  // ==========================================
+  // 1. CẤU HÌNH SUPABASE
+  // ==========================================
+  const SUPABASE_URL = 'https://YOUR_PROJECT_ID.supabase.co';
+  const SUPABASE_ANON_KEY = 'YOUR_ANON_KEY';
+  const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-                // Tạo URL Static Map (Vệ tinh)
-                const imgUrl = `https://maps.googleapis.com/maps/api/staticmap?center=${lat},${lng}&zoom=19&size=800x500&maptype=satellite&key=${GOOGLE_MAPS_API_KEY}`;
-                
-                const container = document.getElementById('canvasContainer');
-                container.style.backgroundImage = `url('${imgUrl}')`;
-                
-                // Preload ảnh để bắt lỗi nếu có
-                const img = new Image();
-                img.onload = () => { statusEl.innerText = "Đã tải xong ảnh vệ tinh làm nền."; };
-                img.onerror = () => { statusEl.innerText = "Lỗi tải ảnh Map (Kiểm tra API Key hoặc Billing Google Cloud)."; statusEl.className = "text-sm text-red-600 font-bold"; };
-                img.src = imgUrl;
+  // ==========================================
+  // 2. TẬP HỢP HÀM XỬ LÝ DỮ LIỆU (SUPABASE SERVICE)
+  // ==========================================
+  const SurveyDB = {
+    async getCurrentUser() {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return null;
+      const { data: profile } = await supabase.from('profiles').select('*').eq('id', user.id).single();
+      return { ...user, profile };
+    },
 
-            }, (err) => {
-                statusEl.innerText = "Lỗi khi lấy GPS: " + err.message;
-            }, { enableHighAccuracy: true });
-        }
+    async logout() {
+      await supabase.auth.signOut();
+      window.location.reload();
+    },
 
-        // ==========================================
-        // 5. CÔNG CỤ VẼ SƠ ĐỒ (CANVAS)
-        // ==========================================
-        const canvas = document.getElementById('sketchCanvas');
-        const ctx = canvas.getContext('2d');
-        let isDrawing = false;
-        let startX, startY;
-        let savedImageData; // Dùng để undo tạm khi kẻ đường thẳng
+    async fetchPlans() {
+      const { data, error } = await supabase.from('plans').select('*').order('created_at', { ascending: false });
+      if (error) console.error('Lỗi lấy danh sách:', error);
+      return data || [];
+    },
 
-        function setTool(toolName) {
-            currentTool = toolName;
-            document.querySelectorAll('.tool-btn').forEach(btn => {
-                btn.classList.remove('active', 'bg-white', 'shadow-sm');
-                btn.classList.add('hover:bg-gray-200');
-            });
-            const activeBtn = document.getElementById('btnTool-' + toolName);
-            activeBtn.classList.remove('hover:bg-gray-200');
-            activeBtn.classList.add('active', 'bg-white', 'shadow-sm');
-        }
+    async savePlan(formData, isSubmit = false) {
+      const user = await this.getCurrentUser();
+      
+      const payload = {
+        code: formData.code || `PA-${Date.now()}`,
+        customer_name: formData.customer_name,
+        customer_phone: formData.customer_phone,
+        address: formData.address,
+        survey_data: formData,
+        sketch_image: getCanvasData('sketch-canvas'),
+        sig_customer: getCanvasData('sig-customer-canvas'),
+        sig_staff: getCanvasData('sig-staff-canvas'),
+        status: isSubmit ? 'pending' : (formData.status || 'draft'),
+        created_by: user ? user.id : null
+      };
 
-        function getMousePos(evt) {
-            const rect = canvas.getBoundingClientRect();
-            // Xử lý scale nếu màn hình nhỏ lại
-            const scaleX = canvas.width / rect.width;
-            const scaleY = canvas.height / rect.height;
-            
-            // Xử lý touch event
-            let clientX = evt.clientX;
-            let clientY = evt.clientY;
-            if(evt.touches && evt.touches.length > 0) {
-                clientX = evt.touches[0].clientX;
-                clientY = evt.touches[0].clientY;
-            }
+      const { data, error } = await supabase.from('plans').upsert([payload], { onConflict: 'code' }).select();
+      if (error) throw error;
+      return data[0];
+    },
 
-            return {
-                x: (clientX - rect.left) * scaleX,
-                y: (clientY - rect.top) * scaleY
-            };
-        }
+    async updateStatus(planId, status, rejectionReason = '') {
+      const user = await this.getCurrentUser();
+      const { data, error } = await supabase
+        .from('plans')
+        .update({ status, rejection_reason: rejectionReason, approved_by: user ? user.id : null })
+        .eq('id', planId)
+        .select();
+      if (error) throw error;
+      return data[0];
+    },
 
-        function drawStamp(x, y, text, color) {
-            ctx.beginPath();
-            ctx.fillStyle = color;
-            ctx.arc(x, y, 12, 0, Math.PI * 2);
-            ctx.fill();
-            ctx.strokeStyle = '#fff';
-            ctx.lineWidth = 2;
-            ctx.stroke();
-            
-            ctx.fillStyle = '#fff';
-            ctx.font = '10px Arial';
-            ctx.textAlign = 'center';
-            ctx.textBaseline = 'middle';
-            ctx.fillText(text, x, y);
-        }
+    subscribe(callback) {
+      return supabase.channel('plans-realtime').on('postgres_changes', { event: '*', schema: 'public', table: 'plans' }, callback).subscribe();
+    }
+  };
 
-        function startInteraction(e) {
-            e.preventDefault();
-            const pos = getMousePos(e);
-            
-            if(currentTool === 'stamp_tram') { drawStamp(pos.x, pos.y, 'T', '#ef4444'); return; }
-            if(currentTool === 'stamp_tru') { drawStamp(pos.x, pos.y, 'Tr', '#374151'); return; }
-            if(currentTool === 'stamp_dienke') { drawStamp(pos.x, pos.y, 'ĐK', '#3b82f6'); return; }
+  // ==========================================
+  // 3. XỬ LÝ VẼ CANVAS (SKETCH & SIGNATURE)
+  // ==========================================
+  function initCanvas(canvasId) {
+    const canvas = document.getElementById(canvasId);
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    let isDrawing = false;
 
-            isDrawing = true;
-            startX = pos.x;
-            startY = pos.y;
-            
-            if (currentTool === 'line') {
-                savedImageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-            } else if (currentTool === 'pen') {
-                ctx.beginPath();
-                ctx.moveTo(startX, startY);
-            }
-        }
+    function getPos(e) {
+      const rect = canvas.getBoundingClientRect();
+      const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+      const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+      return { x: clientX - rect.left, y: clientY - rect.top };
+    }
 
-        function moveInteraction(e) {
-            e.preventDefault();
-            if (!isDrawing) return;
-            const pos = getMousePos(e);
+    function startDraw(e) { isDrawing = true; const p = getPos(e); ctx.beginPath(); ctx.moveTo(p.x, p.y); }
+    function draw(e) {
+      if (!isDrawing) return;
+      const p = getPos(e);
+      ctx.lineTo(p.x, p.y);
+      ctx.stroke();
+    }
+    function stopDraw() { isDrawing = false; }
 
-            ctx.strokeStyle = '#eab308'; // Màu vàng điện lực
-            ctx.lineWidth = 3;
-            ctx.lineCap = 'round';
-            ctx.lineJoin = 'round';
+    canvas.addEventListener('mousedown', startDraw);
+    canvas.addEventListener('mousemove', draw);
+    canvas.addEventListener('mouseup', stopDraw);
+    canvas.addEventListener('touchstart', startDraw);
+    canvas.addEventListener('touchmove', draw);
+    canvas.addEventListener('touchend', stopDraw);
+  }
 
-            if (currentTool === 'pen') {
-                ctx.lineTo(pos.x, pos.y);
-                ctx.stroke();
-            } else if (currentTool === 'line') {
-                ctx.putImageData(savedImageData, 0, 0);
-                ctx.beginPath();
-                ctx.moveTo(startX, startY);
-                ctx.lineTo(pos.x, pos.y);
-                ctx.stroke();
-            }
-        }
+  function clearCanvas(canvasId) {
+    const canvas = document.getElementById(canvasId);
+    const ctx = canvas.getContext('2d');
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+  }
 
-        function endInteraction(e) {
-            e.preventDefault();
-            isDrawing = false;
-        }
+  function getCanvasData(canvasId) {
+    const canvas = document.getElementById(canvasId);
+    return canvas ? canvas.toDataURL('image/png') : null;
+  }
 
-        function clearCanvas() {
-            if(confirm("Bạn có chắc muốn xóa toàn bộ sơ đồ?")) {
-                ctx.clearRect(0, 0, canvas.width, canvas.height);
-            }
-        }
+  // ==========================================
+  // 4. LOGIC GIAO DIỆN VÀ SỰ KIỆN
+  // ==========================================
+  document.addEventListener('DOMContentLoaded', async () => {
+    // Khởi tạo tính năng vẽ cho các canvas
+    ['sketch-canvas', 'sig-customer-canvas', 'sig-staff-canvas'].forEach(initCanvas);
 
-        // Đăng ký event cho Canvas Vẽ
-        canvas.addEventListener('mousedown', startInteraction);
-        canvas.addEventListener('mousemove', moveInteraction);
-        canvas.addEventListener('mouseup', endInteraction);
-        canvas.addEventListener('mouseout', endInteraction);
-        
-        canvas.addEventListener('touchstart', startInteraction, {passive: false});
-        canvas.addEventListener('touchmove', moveInteraction, {passive: false});
-        canvas.addEventListener('touchend', endInteraction, {passive: false});
+    // Kiểm tra đăng nhập
+    const user = await SurveyDB.getCurrentUser();
+    const infoElem = document.getElementById('user-info');
+    if (user) {
+      infoElem.innerText = `Tài khoản: ${user.profile?.full_name || user.email} (${user.profile?.role || 'nhan_vien'})`;
+    } else {
+      infoElem.innerText = 'Chưa đăng nhập (Đang sử dụng chế độ Khách)';
+    }
 
-        // ==========================================
-        // 6. KHUNG CHỮ KÝ (NHÂN VIÊN & TỔ TRƯỞNG)
-        // ==========================================
-        function initSignatureCanvas(canvasId) {
-            const sigCanvas = document.getElementById(canvasId);
-            const sigCtx = sigCanvas.getContext('2d');
-            
-            // Chỉnh đúng size thật cho canvas
-            const rect = sigCanvas.getBoundingClientRect();
-            sigCanvas.width = rect.width;
-            sigCanvas.height = rect.height;
+    // Tải danh sách & Bật Realtime
+    await loadPlansTable();
+    SurveyDB.subscribe(() => loadPlansTable());
+  });
 
-            let drawingSig = false;
+  async function handleSave(isSubmit) {
+    try {
+      const formData = {
+        code: document.getElementById('code').value,
+        customer_name: document.getElementById('customer_name').value,
+        customer_phone: document.getElementById('customer_phone').value,
+        address: document.getElementById('address').value,
+        can_tru_do: document.getElementById('can_tru_do').value
+      };
 
-            function getSigPos(evt) {
-                const r = sigCanvas.getBoundingClientRect();
-                let clientX = evt.clientX; let clientY = evt.clientY;
-                if(evt.touches && evt.touches.length > 0) {
-                    clientX = evt.touches[0].clientX; clientY = evt.touches[0].clientY;
-                }
-                return { x: clientX - r.left, y: clientY - r.top };
-            }
+      if (!formData.customer_name) {
+        alert('Vui lòng nhập tên khách hàng!');
+        return;
+      }
 
-            sigCanvas.addEventListener('mousedown', (e) => {
-                // Nếu là canvas tổ trưởng mà đang là nhân viên thì khóa
-                if(canvasId === 'ttCanvas' && currentRole === 'nhanvien') return;
-                drawingSig = true;
-                const pos = getSigPos(e);
-                sigCtx.beginPath();
-                sigCtx.moveTo(pos.x, pos.y);
-            });
-            sigCanvas.addEventListener('mousemove', (e) => {
-                if (!drawingSig) return;
-                const pos = getSigPos(e);
-                sigCtx.strokeStyle = '#0f172a';
-                sigCtx.lineWidth = 2;
-                sigCtx.lineTo(pos.x, pos.y);
-                sigCtx.stroke();
-            });
-            sigCanvas.addEventListener('mouseup', () => drawingSig = false);
-            sigCanvas.addEventListener('mouseout', () => drawingSig = false);
-            
-            // Touch
-            sigCanvas.addEventListener('touchstart', (e) => {
-                if(canvasId === 'ttCanvas' && currentRole === 'nhanvien') return;
-                e.preventDefault(); drawingSig = true;
-                const pos = getSigPos(e); sigCtx.beginPath(); sigCtx.moveTo(pos.x, pos.y);
-            }, {passive: false});
-            sigCanvas.addEventListener('touchmove', (e) => {
-                if (!drawingSig) return; e.preventDefault();
-                const pos = getSigPos(e); sigCtx.lineTo(pos.x, pos.y); sigCtx.stroke();
-            }, {passive: false});
-            sigCanvas.addEventListener('touchend', () => drawingSig = false);
-        }
+      const res = await SurveyDB.savePlan(formData, isSubmit);
+      document.getElementById('code').value = res.code;
+      alert(isSubmit ? 'Đã gửi duyệt phương án!' : 'Đã lưu nháp thành công!');
+      loadPlansTable();
+    } catch (err) {
+      alert('Lỗi lưu phương án: ' + err.message);
+    }
+  }
 
-        initSignatureCanvas('nvCanvas');
-        initSignatureCanvas('ttCanvas');
+  async function loadPlansTable() {
+    const plans = await SurveyDB.fetchPlans();
+    const tbody = document.getElementById('plans-table-body');
+    tbody.innerHTML = '';
 
-        function clearSignature(canvasId) {
-            if(canvasId === 'ttCanvas' && currentRole === 'nhanvien') {
-                alert("Chỉ Tổ trưởng mới có quyền xóa/ký mục này."); return;
-            }
-            const c = document.getElementById(canvasId);
-            const cx = c.getContext('2d');
-            cx.clearRect(0, 0, c.width, c.height);
-        }
+    if (plans.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;">Chưa có dữ liệu</td></tr>';
+      return;
+    }
 
-        // Xử lý resize để không bị lệch nét chữ ký
-        window.addEventListener('resize', () => {
-            // Lưu dữ liệu hiện tại
-            const nvData = document.getElementById('nvCanvas').toDataURL();
-            const ttData = document.getElementById('ttCanvas').toDataURL();
-            
-            initSignatureCanvas('nvCanvas');
-            initSignatureCanvas('ttCanvas');
-            
-            // Phục hồi (Cần viết thêm hàm drawImage nếu muốn giữ nguyên khi xoay màn hình)
-        });
+    plans.forEach(plan => {
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td><b>${plan.code}</b></td>
+        <td>${plan.customer_name}</td>
+        <td>${plan.address || ''}</td>
+        <td><span style="font-weight:bold; color: ${getStatusColor(plan.status)}">${plan.status.toUpperCase()}</span></td>
+        <td>
+          <button class="btn btn-secondary" style="padding:2px 6px;" onclick="viewPlan('${plan.id}')">Xem</button>
+          <button class="btn btn-success" style="padding:2px 6px;" onclick="approvePlan('${plan.id}')">Duyệt</button>
+        </td>
+      `;
+      tbody.appendChild(tr);
+    });
+  }
 
-        // ==========================================
-        // 7. LƯU & TẢI TỪ SUPABASE
-        // ==========================================
-        async function savePlan() {
-            if (!supabase) {
-                alert("Bạn chưa cấu hình SUPABASE_URL và ANON_KEY trong mã nguồn.
-Vui lòng mở file code lên để điền Key trước khi dùng tính năng lưu đám mây.");
-                return;
-            }
+  function getStatusColor(status) {
+    switch(status) {
+      case 'approved': return 'green';
+      case 'rejected': return 'red';
+      case 'pending': return 'orange';
+      default: return 'gray';
+    }
+  }
 
-            const planData = {
-                id: document.getElementById('planId').value,
-                customer_name: document.getElementById('customerName').value,
-                address: document.getElementById('address').value,
-                capacity: document.getElementById('capacity').value,
-                gps: document.getElementById('gpsCoords').value,
-                status: currentStatus,
-                map_bg: document.getElementById('canvasContainer').style.backgroundImage,
-                sketch_data: canvas.toDataURL('image/png'),
-                sig_nv: document.getElementById('nvCanvas').toDataURL('image/png'),
-                name_nv: document.getElementById('nvName').value,
-                sig_tt: document.getElementById('ttCanvas').toDataURL('image/png'),
-                name_tt: document.getElementById('ttName').value,
-                updated_at: new Date().toISOString()
-            };
+  async function approvePlan(id) {
+    if (confirm('Xác nhận duyệt phương án này?')) {
+      await SurveyDB.updateStatus(id, 'approved');
+      loadPlansTable();
+    }
+  }
 
-            if(!planData.customer_name) {
-                alert("Vui lòng nhập Tên khách hàng!"); return;
-            }
+  async function viewPlan(id) {
+    const plans = await SurveyDB.fetchPlans();
+    const p = plans.find(item => item.id === id);
+    if (!p) return;
 
-            try {
-                // Giả định bạn đã tạo Table: phuong_an_cap_dien
-                const { data, error } = await supabase
-                    .from('phuong_an_cap_dien')
-                    .upsert([{ 
-                        plan_id: planData.id,
-                        data_json: planData,
-                        status: planData.status
-                    }], { onConflict: 'plan_id' });
-                
-                if (error) throw error;
-                
-                // Chuyển sang trạng thái chờ duyệt nếu đang là Nháp
-                if(currentStatus === 'Nháp') {
-                    document.getElementById('docStatus').innerText = "Chờ Duyệt";
-                    document.getElementById('docStatus').className = "px-3 py-1 rounded-full text-sm font-bold status-choduyet";
-                    currentStatus = 'Pending';
-                }
-                
-                alert("Đã đồng bộ lên Supabase thành công!");
-            } catch (err) {
-                console.error(err);
-                alert("Lỗi khi lưu lên Supabase: " + err.message + "
+    document.getElementById('code').value = p.code;
+    document.getElementById('customer_name').value = p.customer_name;
+    document.getElementById('customer_phone').value = p.customer_phone || '';
+    document.getElementById('address').value = p.address || '';
+  }
+</script>
 
-Hãy đảm bảo bạn đã tạo table 'phuong_an_cap_dien' với các cột: plan_id (PK), data_json (JSON), status (Text)");
-            }
-        }
-
-        async function loadPlans() {
-            if (!supabase) {
-                alert("Chưa cấu hình Supabase!"); return;
-            }
-            try {
-                const { data, error } = await supabase
-                    .from('phuong_an_cap_dien')
-                    .select('*')
-                    .order('created_at', { ascending: false })
-                    .limit(5); // Chỉ lấy 5 cái mới nhất ví dụ
-                
-                if (error) throw error;
-                
-                if(data && data.length > 0) {
-                    let msg = "Danh sách 5 phương án gần nhất:
-
-";
-                    data.forEach((item, index) => {
-                        msg += `${index+1}. [${item.plan_id}] - ${item.data_json.customer_name} (${item.status})
-`;
-                    });
-                    alert(msg + "
-(Tính năng Load chi tiết vào Form sẽ được viết mở rộng trong tương lai tuỳ nghiệp vụ)");
-                    console.log("Data từ Supabase:", data);
-                } else {
-                    alert("Chưa có dữ liệu nào trên hệ thống.");
-                }
-
-            } catch (err) {
-                console.error(err);
-                alert("Lỗi tải dữ liệu: " + err.message);
-            }
-        }
-
-    </script>
 </body>
 </html>
