@@ -1,303 +1,611 @@
 <!DOCTYPE html>
 <html lang="vi">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Mô Phỏng Mặt Trời & La Bàn AR</title>
-  
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/suncalc/1.9.0/suncalc.min.js"></script>
-
-  <style>
-    * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-    body { margin: 0; padding: 0; overflow: hidden; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background-color: #1a1a1a; touch-action: none; }
-    #canvas-container { width: 100vw; height: 100vh; display: block; }
-
-    #toggle-btn {
-      position: absolute; top: 15px; right: 15px; z-index: 1000;
-      background: rgba(255, 255, 255, 0.9); border: none; padding: 10px 16px;
-      border-radius: 20px; font-weight: bold; font-size: 0.85rem; color: #222;
-      box-shadow: 0 4px 15px rgba(0,0,0,0.25); cursor: pointer; backdrop-filter: blur(8px);
-    }
-
-    #ui-panel {
-      position: absolute; top: 20px; right: 20px; width: 320px;
-      max-height: calc(100vh - 40px); overflow-y: auto;
-      background: rgba(255, 255, 255, 0.92); backdrop-filter: blur(12px);
-      padding: 18px; border-radius: 16px; box-shadow: 0 10px 30px rgba(0,0,0,0.3);
-      color: #333; z-index: 999; transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s ease;
-    }
-
-    #ui-panel.hidden { opacity: 0; pointer-events: none; transform: translateY(20px); }
-    h2 { margin: 0 0 12px 0; font-size: 1.1rem; color: #111; }
-    .control-group { margin-bottom: 12px; }
-    label { display: block; font-weight: 600; margin-bottom: 6px; font-size: 0.85rem; }
-    
-    input[type="range"] { width: 100%; height: 6px; border-radius: 3px; background: #ddd; outline: none; }
-    input[type="date"] { width: 100%; padding: 8px; border-radius: 8px; border: 1px solid #ccc; font-size: 0.9rem; }
-
-    /* Style cho nút La bàn */
-    #compass-btn {
-      width: 100%; padding: 12px; border-radius: 8px; border: 1px solid #ccc; background: #fff;
-      font-weight: bold; font-size: 0.9rem; cursor: pointer; display: flex; align-items: center;
-      justify-content: center; gap: 8px; transition: 0.2s; box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-    }
-    #compass-btn.active { background: #e0f2fe; color: #0369a1; border-color: #0284c7; }
-
-    .autoplay-box { display: flex; align-items: center; gap: 8px; background: #f1f5f9; padding: 8px 12px; border-radius: 8px; font-weight: 600; font-size: 0.85rem; cursor: pointer; }
-    .metrics { background: #f8fafc; border: 1px solid #e2e8f0; padding: 10px; border-radius: 10px; font-size: 0.8rem; line-height: 1.6; }
-    .legend { margin-top: 10px; font-size: 0.78rem; }
-    .legend div { display: flex; align-items: center; margin-bottom: 4px; }
-    .color-box { width: 10px; height: 10px; margin-right: 8px; border-radius: 2px;}
-
-    @media (max-width: 600px) {
-      #ui-panel { top: auto; bottom: 15px; left: 15px; right: 15px; width: auto; max-height: 60vh; padding: 14px; }
-      #ui-panel.hidden { transform: translateY(100%); }
-    }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Phương Án Cung Cấp Điện - Điện lực Rạch Giá</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f3f4f6; }
+        .glass-panel { background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(10px); border-radius: 12px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06); }
+        
+        /* Canvas Styling */
+        #canvasWrapper { width: 100%; overflow-x: auto; background: #e5e7eb; border-radius: 8px; border: 2px solid #d1d5db; }
+        #canvasContainer { position: relative; width: 800px; height: 500px; background-color: #fff; background-size: cover; background-position: center; cursor: crosshair; margin: 0 auto; }
+        #sketchCanvas { position: absolute; top: 0; left: 0; z-index: 10; }
+        
+        .tool-btn { transition: all 0.2s ease; }
+        .tool-btn.active { background-color: #2563eb; color: white; border-color: #2563eb; }
+        
+        /* Signature styling */
+        .sig-container { border: 2px dashed #cbd5e1; border-radius: 8px; background: #f8fafc; }
+        .sig-canvas { width: 100%; height: 120px; cursor: crosshair; }
+        
+        /* Status badge */
+        .status-nhap { background: #f3f4f6; color: #4b5563; }
+        .status-choduyet { background: #fef3c7; color: #d97706; }
+        .status-daduyet { background: #d1fae5; color: #059669; }
+        .status-tuchoi { background: #fee2e2; color: #dc2626; }
+    </style>
 </head>
-<body>
+<body class="text-gray-800 antialiased p-4 md:p-8">
 
-  <button id="toggle-btn">👁️ Ẩn/Hiện Bảng Điều Khiển</button>
+    <div class="max-w-6xl mx-auto space-y-6">
+        <!-- Header -->
+        <header class="glass-panel p-6 flex flex-col md:flex-row justify-between items-center border-t-4 border-blue-600">
+            <div class="flex items-center gap-4 mb-4 md:mb-0">
+                <div class="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center text-blue-600 text-3xl">
+                    <i class="fa-solid fa-bolt"></i>
+                </div>
+                <div>
+                    <h1 class="text-2xl font-bold text-gray-900">Phương Án Cung Cấp Điện</h1>
+                    <p class="text-gray-500">Công ty Điện lực An Giang - Điện lực Rạch Giá</p>
+                </div>
+            </div>
+            
+            <div class="flex flex-col items-end gap-2">
+                <div class="flex items-center gap-3">
+                    <span class="text-sm font-medium text-gray-600">Vai trò hiện tại:</span>
+                    <span id="currentRoleBadge" class="px-3 py-1 bg-blue-100 text-blue-700 font-bold rounded-full text-sm">Nhân viên</span>
+                    <button onclick="switchRole()" class="text-sm text-blue-600 hover:underline"><i class="fa-solid fa-right-left"></i> Đổi</button>
+                </div>
+                <div class="flex items-center gap-2 mt-2">
+                    <span class="text-sm font-medium">Trạng thái hồ sơ:</span>
+                    <span id="docStatus" class="px-3 py-1 rounded-full text-sm font-bold status-nhap">Bản Nháp</span>
+                </div>
+            </div>
+        </header>
 
-  <div id="canvas-container"></div>
+        <!-- Main Form Content -->
+        <main class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            
+            <!-- Left Column: Form & Actions -->
+            <div class="space-y-6 lg:col-span-1">
+                <!-- Customer Info -->
+                <div class="glass-panel p-6">
+                    <h2 class="text-lg font-semibold mb-4 border-b pb-2"><i class="fa-regular fa-address-card mr-2"></i>Thông tin chung</h2>
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Mã Phương Án</label>
+                            <input type="text" id="planId" readonly class="w-full bg-gray-100 border border-gray-300 rounded-md p-2 text-sm text-gray-500" value="">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Tên khách hàng/Công trình</label>
+                            <input type="text" id="customerName" class="w-full border border-gray-300 rounded-md p-2 focus:ring-blue-500 focus:border-blue-500">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Địa chỉ thi công</label>
+                            <textarea id="address" rows="2" class="w-full border border-gray-300 rounded-md p-2 focus:ring-blue-500 focus:border-blue-500"></textarea>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Nhu cầu công suất (kW/kVA)</label>
+                            <input type="text" id="capacity" class="w-full border border-gray-300 rounded-md p-2 focus:ring-blue-500 focus:border-blue-500">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Tọa độ GPS hiện trường</label>
+                            <div class="flex gap-2">
+                                <input type="text" id="gpsCoords" readonly placeholder="Chưa lấy tọa độ" class="w-full bg-gray-50 border border-gray-300 rounded-md p-2 text-sm">
+                                <button onclick="getLocation()" class="bg-blue-100 text-blue-700 px-3 py-2 rounded-md hover:bg-blue-200 transition" title="Lấy GPS">
+                                    <i class="fa-solid fa-location-crosshairs"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
 
-  <div id="ui-panel">
-    <h2>Trục Thời Gian Mặt Trời</h2>
-    
-    <div class="control-group">
-      <button id="compass-btn">🧭 Bật đồng bộ La Bàn</button>
+                <!-- Action Buttons -->
+                <div class="glass-panel p-6">
+                    <h2 class="text-lg font-semibold mb-4 border-b pb-2"><i class="fa-solid fa-server mr-2"></i>Hệ thống (Supabase)</h2>
+                    <div class="space-y-3">
+                        <button onclick="savePlan()" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-md shadow transition flex justify-center items-center gap-2">
+                            <i class="fa-solid fa-cloud-arrow-up"></i> Lưu phương án
+                        </button>
+                        <button onclick="loadPlans()" class="w-full bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 font-medium py-2 px-4 rounded-md shadow-sm transition flex justify-center items-center gap-2">
+                            <i class="fa-solid fa-cloud-arrow-down"></i> Tải danh sách đã lưu
+                        </button>
+                    </div>
+                    
+                    <!-- Manager Actions (Hidden by default) -->
+                    <div id="managerActions" class="mt-6 pt-4 border-t hidden">
+                        <h3 class="text-sm font-bold text-gray-700 mb-3 uppercase tracking-wider">Dành cho Tổ trưởng</h3>
+                        <div class="flex gap-2">
+                            <button onclick="updateStatus('Đã duyệt')" class="flex-1 bg-green-600 hover:bg-green-700 text-white font-medium py-2 px-2 rounded-md transition text-sm">
+                                <i class="fa-solid fa-check mr-1"></i> Phê duyệt
+                            </button>
+                            <button onclick="updateStatus('Từ chối')" class="flex-1 bg-red-600 hover:bg-red-700 text-white font-medium py-2 px-2 rounded-md transition text-sm">
+                                <i class="fa-solid fa-xmark mr-1"></i> Từ chối
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Column: Sketch & Signatures -->
+            <div class="space-y-6 lg:col-span-2">
+                
+                <!-- Map & Sketching Area -->
+                <div class="glass-panel p-6 flex flex-col">
+                    <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-4 gap-4">
+                        <h2 class="text-lg font-semibold"><i class="fa-solid fa-map mr-2"></i>Sơ đồ cấp điện</h2>
+                        
+                        <!-- Toolbar -->
+                        <div class="flex flex-wrap gap-2 p-1 bg-gray-100 rounded-lg border">
+                            <button onclick="setTool('pen')" id="btnTool-pen" class="tool-btn active px-3 py-1.5 rounded text-sm font-medium text-gray-600 bg-white shadow-sm" title="Vẽ tự do"><i class="fa-solid fa-pen"></i></button>
+                            <button onclick="setTool('line')" id="btnTool-line" class="tool-btn px-3 py-1.5 rounded text-sm font-medium text-gray-600 hover:bg-gray-200" title="Kẻ đường thẳng"><i class="fa-solid fa-minus"></i></button>
+                            <div class="w-px bg-gray-300 mx-1"></div>
+                            <button onclick="setTool('stamp_tram')" id="btnTool-stamp_tram" class="tool-btn px-3 py-1.5 rounded text-sm font-medium text-gray-600 hover:bg-gray-200" title="Chèn Trạm biến áp"><i class="fa-solid fa-charging-station text-red-500 mr-1"></i> Trạm</button>
+                            <button onclick="setTool('stamp_tru')" id="btnTool-stamp_tru" class="tool-btn px-3 py-1.5 rounded text-sm font-medium text-gray-600 hover:bg-gray-200" title="Chèn Trụ điện"><i class="fa-solid fa-torii-gate text-gray-700 mr-1"></i> Trụ</button>
+                            <button onclick="setTool('stamp_dienke')" id="btnTool-stamp_dienke" class="tool-btn px-3 py-1.5 rounded text-sm font-medium text-gray-600 hover:bg-gray-200" title="Chèn Điện kế"><i class="fa-solid fa-gauge text-blue-500 mr-1"></i> Đ.Kế</button>
+                            <div class="w-px bg-gray-300 mx-1"></div>
+                            <button onclick="clearCanvas()" class="px-3 py-1.5 rounded text-sm font-medium text-red-600 hover:bg-red-50" title="Xóa toàn bộ sơ đồ"><i class="fa-solid fa-trash-can"></i> Xóa</button>
+                        </div>
+                    </div>
+
+                    <!-- Map API Trigger -->
+                    <div class="mb-4 flex items-center justify-between bg-blue-50 p-3 rounded-md border border-blue-100">
+                        <span class="text-sm text-blue-800" id="mapStatusText">Chưa tải nền bản đồ.</span>
+                        <button onclick="loadMapBackground()" class="bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium py-1.5 px-4 rounded shadow-sm transition">
+                            <i class="fa-solid fa-satellite mr-1"></i> Tải ảnh Map tại vị trí GPS
+                        </button>
+                    </div>
+
+                    <!-- Canvas -->
+                    <div id="canvasWrapper">
+                        <div id="canvasContainer">
+                            <canvas id="sketchCanvas" width="800" height="500"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Signatures -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div class="glass-panel p-6">
+                        <div class="flex justify-between items-center mb-2">
+                            <h3 class="font-semibold text-gray-700">Chữ ký Nhân viên</h3>
+                            <button onclick="clearSignature('nvCanvas')" class="text-xs text-red-500 hover:underline">Xóa ký</button>
+                        </div>
+                        <div class="sig-container relative">
+                            <canvas id="nvCanvas" class="sig-canvas w-full h-full"></canvas>
+                        </div>
+                        <input type="text" id="nvName" placeholder="Ghi rõ họ tên" class="mt-2 w-full border-b border-gray-300 outline-none p-1 text-center bg-transparent">
+                    </div>
+                    <div class="glass-panel p-6">
+                        <div class="flex justify-between items-center mb-2">
+                            <h3 class="font-semibold text-gray-700">Chữ ký Tổ trưởng</h3>
+                            <button onclick="clearSignature('ttCanvas')" class="text-xs text-red-500 hover:underline">Xóa ký</button>
+                        </div>
+                        <div class="sig-container relative">
+                            <!-- Overlay disable if not To Truong -->
+                            <div id="ttOverlay" class="absolute inset-0 bg-gray-100 bg-opacity-70 z-20 flex items-center justify-center rounded-md">
+                                <span class="text-sm text-gray-500 font-medium"><i class="fa-solid fa-lock mr-1"></i> Chờ duyệt</span>
+                            </div>
+                            <canvas id="ttCanvas" class="sig-canvas w-full h-full relative z-10"></canvas>
+                        </div>
+                        <input type="text" id="ttName" placeholder="Ghi rõ họ tên" readonly class="mt-2 w-full border-b border-gray-300 outline-none p-1 text-center bg-transparent">
+                    </div>
+                </div>
+
+            </div>
+        </main>
     </div>
 
-    <div class="control-group">
-      <label for="date-input">Ngày trong năm:</label>
-      <input type="date" id="date-input">
-    </div>
+    <!-- CẤU HÌNH API VÀ LOGIC JAVASCRIPT -->
+    <script>
+        // ==========================================
+        // 1. CẤU HÌNH API KEY (QUAN TRỌNG: BẠN CẦN THAY THẾ KEY CỦA BẠN VÀO ĐÂY)
+        // ==========================================
+        const GOOGLE_MAPS_API_KEY = 'YOUR_GOOGLE_MAPS_API_KEY'; 
+        const SUPABASE_URL = 'YOUR_SUPABASE_URL'; // vd: https://xyz.supabase.co
+        const SUPABASE_ANON_KEY = 'YOUR_SUPABASE_ANON_KEY';
+        
+        let supabase = null;
+        try {
+            if(SUPABASE_URL !== 'YOUR_SUPABASE_URL') {
+                supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+            }
+        } catch(e) { console.warn("Supabase init bypassed (using dummy keys)"); }
 
-    <div class="control-group">
-      <label for="time-slider">Thời gian: <span id="time-display" style="color:#0284c7;">12:00</span></label>
-      <input type="range" id="time-slider" min="0" max="1440" value="720">
-    </div>
+        // ==========================================
+        // 2. BIẾN TOÀN CỤC & TRẠNG THÁI
+        // ==========================================
+        let currentRole = 'nhanvien'; // nhanvien | totruong
+        let currentStatus = 'Nháp'; 
+        let currentTool = 'pen'; // pen, line, stamp_tram, stamp_tru, stamp_dienke
+        
+        // Tạo ID ngẫu nhiên khi khởi tạo trang
+        document.getElementById('planId').value = "PA-" + Date.now().toString().slice(-6);
 
-    <div class="control-group">
-      <label class="autoplay-box">
-        <input type="checkbox" id="autoplay-checkbox">
-        <span>▶ Tự động chạy theo thời gian</span>
-      </label>
-    </div>
-
-    <div class="metrics">
-      <div><strong>Tọa độ:</strong> Vĩ độ 10.77°, Kinh độ 106.70° (TP.HCM)</div>
-      <div><strong>Góc nghiêng (Altitude):</strong> <span id="val-alt">0</span>°</div>
-      <div><strong>Góc phương vị (Azimuth):</strong> <span id="val-az">0</span>°</div>
-    </div>
-  </div>
-
-  <script>
-    // --- 1. KHỞI TẠO MÔI TRƯỜNG THREE.JS ---
-    const LAT = 10.7769, LON = 106.7009, SUN_RADIUS = 50; 
-    let currentDate = new Date();
-    document.getElementById('date-input').value = currentDate.toISOString().split('T')[0];
-
-    const container = document.getElementById('canvas-container');
-    const scene = new THREE.Scene();
-    const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
-    camera.position.set(35, 25, 55);
-
-    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, powerPreference: "high-performance" });
-    renderer.setSize(window.innerWidth, window.innerHeight);
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-    renderer.shadowMap.enabled = true; 
-    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
-    container.appendChild(renderer.domElement);
-
-    const controls = new THREE.OrbitControls(camera, renderer.domElement);
-    controls.enableDamping = true;
-    controls.dampingFactor = 0.05;
-    controls.maxPolarAngle = Math.PI / 2 + 0.05;
-
-    // --- 2. VẼ ĐỐI TƯỢNG ---
-    const ground = new THREE.Mesh(
-      new THREE.CylinderGeometry(SUN_RADIUS, SUN_RADIUS, 0.5, 64),
-      new THREE.MeshStandardMaterial({ color: 0x3d6a45, roughness: 0.8 })
-    );
-    ground.position.y = -0.25; ground.receiveShadow = true; scene.add(ground);
-
-    const gridHelper = new THREE.PolarGridHelper(SUN_RADIUS, 16, 8, 64, 0x000000, 0x888888);
-    gridHelper.position.y = 0.01; scene.add(gridHelper);
-
-    const person = new THREE.Mesh(
-      new THREE.CylinderGeometry(0.4, 0.4, 3.5, 16),
-      new THREE.MeshStandardMaterial({ color: 0x222222 })
-    );
-    person.position.y = 1.75; person.castShadow = true; scene.add(person);
-
-    function addCompassLabel(text, position) {
-      const canvas = document.createElement('canvas');
-      canvas.width = 128; canvas.height = 64;
-      const ctx = canvas.getContext('2d');
-      ctx.shadowColor = "rgba(0, 0, 0, 0.8)"; ctx.shadowBlur = 4;
-      ctx.fillStyle = 'white'; ctx.font = 'Bold 32px Arial'; ctx.textAlign = 'center';
-      ctx.fillText(text, 64, 45); 
-      const texture = new THREE.CanvasTexture(canvas);
-      const sprite = new THREE.Sprite(new THREE.SpriteMaterial({ map: texture, depthTest: false }));
-      sprite.position.copy(position); sprite.scale.set(8, 4, 1); scene.add(sprite);
-    }
-
-    addCompassLabel('Bắc', new THREE.Vector3(0, 1, -SUN_RADIUS + 3)); 
-    addCompassLabel('Nam', new THREE.Vector3(0, 1, SUN_RADIUS - 3));  
-    addCompassLabel('Đông', new THREE.Vector3(SUN_RADIUS - 3, 1, 0));  
-    addCompassLabel('Tây', new THREE.Vector3(-SUN_RADIUS + 3, 1, 0)); 
-
-    const sunMesh = new THREE.Mesh(new THREE.SphereGeometry(2.5, 32, 32), new THREE.MeshBasicMaterial({ color: 0xffea00 }));
-    scene.add(sunMesh);
-
-    const sunLight = new THREE.DirectionalLight(0xffffff, 1.4);
-    sunLight.castShadow = true;
-    sunLight.shadow.mapSize.width = 1024; sunLight.shadow.mapSize.height = 1024;
-    sunLight.shadow.camera.near = 0.5; sunLight.shadow.camera.far = 150;
-    sunLight.shadow.camera.left = -50; sunLight.shadow.camera.right = 50;
-    sunLight.shadow.camera.top = 50; sunLight.shadow.camera.bottom = -50;
-    scene.add(sunLight);
-    scene.add(new THREE.AmbientLight(0x555555, 0.6));
-
-    // --- 3. LOGIC MẶT TRỜI ---
-    function getSunPosition(date) {
-      const pos = SunCalc.getPosition(date, LAT, LON);
-      return { 
-        x: SUN_RADIUS * Math.cos(pos.altitude) * -Math.sin(pos.azimuth), 
-        y: SUN_RADIUS * Math.sin(pos.altitude), 
-        z: SUN_RADIUS * Math.cos(pos.altitude) * Math.cos(pos.azimuth), 
-        altitude: pos.altitude, azimuth: pos.azimuth 
-      };
-    }
-
-    function drawSunPath(dateStr, color) {
-      const points = [], baseDate = new Date(dateStr);
-      for (let i = 0; i <= 24 * 60; i += 10) { 
-        const d = new Date(baseDate); d.setHours(0, i, 0, 0);
-        const pos = getSunPosition(d);
-        if (pos.y >= -2) points.push(new THREE.Vector3(pos.x, pos.y, pos.z));
-      }
-      scene.add(new THREE.Line(
-        new THREE.BufferGeometry().setFromPoints(points), 
-        new THREE.LineBasicMaterial({ color: color, linewidth: 2, transparent: true, opacity: 0.65 })
-      ));
-    }
-    const y = currentDate.getFullYear();
-    drawSunPath(`${y}-06-21`, 0xff5722); drawSunPath(`${y}-03-21`, 0x4caf50); drawSunPath(`${y}-12-21`, 0x2196f3); 
-
-    function updateScene() {
-      const timeVal = parseInt(document.getElementById('time-slider').value); 
-      const hours = Math.floor(timeVal / 60), minutes = timeVal % 60;
-      document.getElementById('time-display').innerText = `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
-      
-      const targetDate = new Date(document.getElementById('date-input').value);
-      targetDate.setHours(hours, minutes, 0, 0);
-      const pos = getSunPosition(targetDate);
-
-      sunMesh.position.set(pos.x, pos.y, pos.z); sunLight.position.set(pos.x, pos.y, pos.z);
-
-      if (pos.y < 0) {
-        sunMesh.material.opacity = 0; sunMesh.material.transparent = true; sunLight.intensity = 0;
-        scene.background = new THREE.Color(0x0a1118); 
-      } else {
-        sunMesh.material.opacity = 1; sunLight.intensity = 1.4;
-        scene.background = new THREE.Color().lerpColors(new THREE.Color(0xf97316), new THREE.Color(0x38bdf8), Math.min(pos.y / 20, 1));
-      }
-
-      document.getElementById('val-alt').innerText = (pos.altitude * 180 / Math.PI).toFixed(2);
-      document.getElementById('val-az').innerText = ((pos.azimuth * 180 / Math.PI) + 180).toFixed(2);
-    }
-    document.getElementById('time-slider').addEventListener('input', updateScene);
-    document.getElementById('date-input').addEventListener('change', updateScene);
-    updateScene();
-
-    // --- 4. LA BÀN THIẾT BỊ (DEVICE ORIENTATION) ---
-    const compassBtn = document.getElementById('compass-btn');
-    let isCompassActive = false;
-    let targetHeading = null;
-
-    compassBtn.addEventListener('click', () => {
-      if (!isCompassActive) {
-        // Yêu cầu quyền trên iOS
-        if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function') {
-          DeviceOrientationEvent.requestPermission().then(state => {
-            if (state === 'granted') startCompass();
-            else alert('Cần cấp quyền la bàn để sử dụng tính năng này.');
-          }).catch(console.error);
-        } else {
-          startCompass(); // Dành cho Android
+        // ==========================================
+        // 3. QUẢN LÝ VAI TRÒ
+        // ==========================================
+        function switchRole() {
+            if (currentRole === 'nhanvien') {
+                const pin = prompt("Vui lòng nhập mã PIN Tổ trưởng để chuyển đổi:");
+                if (pin === '2024') {
+                    currentRole = 'totruong';
+                    document.getElementById('currentRoleBadge').innerText = 'Tổ Trưởng';
+                    document.getElementById('currentRoleBadge').className = 'px-3 py-1 bg-purple-100 text-purple-700 font-bold rounded-full text-sm';
+                    document.getElementById('managerActions').classList.remove('hidden');
+                    document.getElementById('ttOverlay').classList.add('hidden');
+                    document.getElementById('ttName').removeAttribute('readonly');
+                    alert("Đã chuyển sang quyền Tổ trưởng!");
+                } else {
+                    if (pin !== null) alert("Mã PIN không chính xác!");
+                }
+            } else {
+                currentRole = 'nhanvien';
+                document.getElementById('currentRoleBadge').innerText = 'Nhân viên';
+                document.getElementById('currentRoleBadge').className = 'px-3 py-1 bg-blue-100 text-blue-700 font-bold rounded-full text-sm';
+                document.getElementById('managerActions').classList.add('hidden');
+                document.getElementById('ttOverlay').classList.remove('hidden');
+                document.getElementById('ttName').setAttribute('readonly', 'true');
+            }
         }
-      } else {
-        stopCompass();
-      }
-    });
 
-    function startCompass() {
-      isCompassActive = true;
-      compassBtn.classList.add('active');
-      compassBtn.innerHTML = '✅ Đang đồng bộ La Bàn (Đang bật)';
-      window.addEventListener('deviceorientationabsolute', handleOrientation);
-      window.addEventListener('deviceorientation', handleOrientation);
-    }
+        function updateStatus(newStatus) {
+            currentStatus = newStatus;
+            const badge = document.getElementById('docStatus');
+            badge.innerText = newStatus;
+            badge.className = 'px-3 py-1 rounded-full text-sm font-bold ' + 
+                (newStatus === 'Đã duyệt' ? 'status-daduyet' : 'status-tuchoi');
+            
+            if(newStatus === 'Đã duyệt') {
+                currentStatus = 'Approved'; // Logic ngầm
+                badge.innerText = 'Đã Phê Duyệt';
+            } else {
+                currentStatus = 'Rejected';
+            }
+        }
 
-    function stopCompass() {
-      isCompassActive = false;
-      targetHeading = null;
-      compassBtn.classList.remove('active');
-      compassBtn.innerHTML = '🧭 Bật đồng bộ La Bàn';
-      window.removeEventListener('deviceorientationabsolute', handleOrientation);
-      window.removeEventListener('deviceorientation', handleOrientation);
-    }
+        // ==========================================
+        // 4. CHỨC NĂNG GPS & GOOGLE MAPS BACKGROUND
+        // ==========================================
+        function getLocation() {
+            if (navigator.geolocation) {
+                document.getElementById('gpsCoords').value = "Đang định vị...";
+                navigator.geolocation.getCurrentPosition(
+                    (pos) => {
+                        document.getElementById('gpsCoords').value = `${pos.coords.latitude}, ${pos.coords.longitude}`;
+                    },
+                    (err) => { document.getElementById('gpsCoords').value = "Lỗi: " + err.message; },
+                    { enableHighAccuracy: true }
+                );
+            } else {
+                alert("Trình duyệt không hỗ trợ GPS.");
+            }
+        }
 
-    function handleOrientation(event) {
-      if (event.webkitCompassHeading !== undefined) {
-        targetHeading = event.webkitCompassHeading; // Trả về góc (Độ) trên iOS
-      } else if (event.alpha !== null) {
-        targetHeading = 360 - event.alpha; // Tính góc cho Android (Absolute)
-      }
-    }
+        function loadMapBackground() {
+            const statusEl = document.getElementById('mapStatusText');
+            if(GOOGLE_MAPS_API_KEY === 'YOUR_GOOGLE_MAPS_API_KEY') {
+                statusEl.innerText = "⚠️ Lỗi: Chưa cấu hình Google Maps API Key trong code.";
+                statusEl.className = "text-sm text-red-600 font-bold";
+                return;
+            }
 
-    // --- 5. RENDER LOOP ---
-    document.getElementById('toggle-btn').addEventListener('click', () => document.getElementById('ui-panel').classList.toggle('hidden'));
+            if (!navigator.geolocation) {
+                statusEl.innerText = "Trình duyệt không hỗ trợ GPS.";
+                return;
+            }
 
-    function animate() {
-      requestAnimationFrame(animate);
+            statusEl.innerText = "Đang lấy tọa độ để tải bản đồ...";
+            navigator.geolocation.getCurrentPosition((position) => {
+                const lat = position.coords.latitude;
+                const lng = position.coords.longitude;
+                statusEl.innerText = `Đã lấy tọa độ (${lat.toFixed(4)}, ${lng.toFixed(4)}). Đang tải ảnh...`;
+                
+                // Cập nhật input GPS luôn
+                document.getElementById('gpsCoords').value = `${lat}, ${lng}`;
 
-      // Tự động xoay camera theo La bàn điện thoại
-      if (isCompassActive && targetHeading !== null) {
-        const rad = targetHeading * (Math.PI / 180);
+                // Tạo URL Static Map (Vệ tinh)
+                const imgUrl = `https://maps.googleapis.com/maps/api/staticmap?center=${lat},${lng}&zoom=19&size=800x500&maptype=satellite&key=${GOOGLE_MAPS_API_KEY}`;
+                
+                const container = document.getElementById('canvasContainer');
+                container.style.backgroundImage = `url('${imgUrl}')`;
+                
+                // Preload ảnh để bắt lỗi nếu có
+                const img = new Image();
+                img.onload = () => { statusEl.innerText = "Đã tải xong ảnh vệ tinh làm nền."; };
+                img.onerror = () => { statusEl.innerText = "Lỗi tải ảnh Map (Kiểm tra API Key hoặc Billing Google Cloud)."; statusEl.className = "text-sm text-red-600 font-bold"; };
+                img.src = imgUrl;
+
+            }, (err) => {
+                statusEl.innerText = "Lỗi khi lấy GPS: " + err.message;
+            }, { enableHighAccuracy: true });
+        }
+
+        // ==========================================
+        // 5. CÔNG CỤ VẼ SƠ ĐỒ (CANVAS)
+        // ==========================================
+        const canvas = document.getElementById('sketchCanvas');
+        const ctx = canvas.getContext('2d');
+        let isDrawing = false;
+        let startX, startY;
+        let savedImageData; // Dùng để undo tạm khi kẻ đường thẳng
+
+        function setTool(toolName) {
+            currentTool = toolName;
+            document.querySelectorAll('.tool-btn').forEach(btn => {
+                btn.classList.remove('active', 'bg-white', 'shadow-sm');
+                btn.classList.add('hover:bg-gray-200');
+            });
+            const activeBtn = document.getElementById('btnTool-' + toolName);
+            activeBtn.classList.remove('hover:bg-gray-200');
+            activeBtn.classList.add('active', 'bg-white', 'shadow-sm');
+        }
+
+        function getMousePos(evt) {
+            const rect = canvas.getBoundingClientRect();
+            // Xử lý scale nếu màn hình nhỏ lại
+            const scaleX = canvas.width / rect.width;
+            const scaleY = canvas.height / rect.height;
+            
+            // Xử lý touch event
+            let clientX = evt.clientX;
+            let clientY = evt.clientY;
+            if(evt.touches && evt.touches.length > 0) {
+                clientX = evt.touches[0].clientX;
+                clientY = evt.touches[0].clientY;
+            }
+
+            return {
+                x: (clientX - rect.left) * scaleX,
+                y: (clientY - rect.top) * scaleY
+            };
+        }
+
+        function drawStamp(x, y, text, color) {
+            ctx.beginPath();
+            ctx.fillStyle = color;
+            ctx.arc(x, y, 12, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.strokeStyle = '#fff';
+            ctx.lineWidth = 2;
+            ctx.stroke();
+            
+            ctx.fillStyle = '#fff';
+            ctx.font = '10px Arial';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText(text, x, y);
+        }
+
+        function startInteraction(e) {
+            e.preventDefault();
+            const pos = getMousePos(e);
+            
+            if(currentTool === 'stamp_tram') { drawStamp(pos.x, pos.y, 'T', '#ef4444'); return; }
+            if(currentTool === 'stamp_tru') { drawStamp(pos.x, pos.y, 'Tr', '#374151'); return; }
+            if(currentTool === 'stamp_dienke') { drawStamp(pos.x, pos.y, 'ĐK', '#3b82f6'); return; }
+
+            isDrawing = true;
+            startX = pos.x;
+            startY = pos.y;
+            
+            if (currentTool === 'line') {
+                savedImageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+            } else if (currentTool === 'pen') {
+                ctx.beginPath();
+                ctx.moveTo(startX, startY);
+            }
+        }
+
+        function moveInteraction(e) {
+            e.preventDefault();
+            if (!isDrawing) return;
+            const pos = getMousePos(e);
+
+            ctx.strokeStyle = '#eab308'; // Màu vàng điện lực
+            ctx.lineWidth = 3;
+            ctx.lineCap = 'round';
+            ctx.lineJoin = 'round';
+
+            if (currentTool === 'pen') {
+                ctx.lineTo(pos.x, pos.y);
+                ctx.stroke();
+            } else if (currentTool === 'line') {
+                ctx.putImageData(savedImageData, 0, 0);
+                ctx.beginPath();
+                ctx.moveTo(startX, startY);
+                ctx.lineTo(pos.x, pos.y);
+                ctx.stroke();
+            }
+        }
+
+        function endInteraction(e) {
+            e.preventDefault();
+            isDrawing = false;
+        }
+
+        function clearCanvas() {
+            if(confirm("Bạn có chắc muốn xóa toàn bộ sơ đồ?")) {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+            }
+        }
+
+        // Đăng ký event cho Canvas Vẽ
+        canvas.addEventListener('mousedown', startInteraction);
+        canvas.addEventListener('mousemove', moveInteraction);
+        canvas.addEventListener('mouseup', endInteraction);
+        canvas.addEventListener('mouseout', endInteraction);
         
-        // Giữ nguyên khoảng cách camera hiện tại tới điểm trung tâm
-        const radius = Math.sqrt(camera.position.x ** 2 + camera.position.z ** 2);
-        
-        // Chuyển hướng 3D: Tính X, Z mới dựa vào hướng la bàn
-        // Sử dụng kĩ thuật Nội suy (Lerp * 0.1) để giảm độ giật của cảm biến
-        const targetX = -radius * Math.sin(rad);
-        const targetZ = radius * Math.cos(rad);
-        
-        camera.position.x += (targetX - camera.position.x) * 0.08;
-        camera.position.z += (targetZ - camera.position.z) * 0.08;
-      }
+        canvas.addEventListener('touchstart', startInteraction, {passive: false});
+        canvas.addEventListener('touchmove', moveInteraction, {passive: false});
+        canvas.addEventListener('touchend', endInteraction, {passive: false});
 
-      if (document.getElementById('autoplay-checkbox').checked) {
-        let val = parseInt(document.getElementById('time-slider').value) + 2;
-        if (val > 1440) val = 0;
-        document.getElementById('time-slider').value = val;
-        updateScene();
-      }
+        // ==========================================
+        // 6. KHUNG CHỮ KÝ (NHÂN VIÊN & TỔ TRƯỞNG)
+        // ==========================================
+        function initSignatureCanvas(canvasId) {
+            const sigCanvas = document.getElementById(canvasId);
+            const sigCtx = sigCanvas.getContext('2d');
+            
+            // Chỉnh đúng size thật cho canvas
+            const rect = sigCanvas.getBoundingClientRect();
+            sigCanvas.width = rect.width;
+            sigCanvas.height = rect.height;
 
-      controls.update(); 
-      renderer.render(scene, camera);
-    }
-    animate();
+            let drawingSig = false;
 
-    window.addEventListener('resize', () => {
-      camera.aspect = window.innerWidth / window.innerHeight;
-      camera.updateProjectionMatrix(); renderer.setSize(window.innerWidth, window.innerHeight);
-    });
-  </script>
+            function getSigPos(evt) {
+                const r = sigCanvas.getBoundingClientRect();
+                let clientX = evt.clientX; let clientY = evt.clientY;
+                if(evt.touches && evt.touches.length > 0) {
+                    clientX = evt.touches[0].clientX; clientY = evt.touches[0].clientY;
+                }
+                return { x: clientX - r.left, y: clientY - r.top };
+            }
+
+            sigCanvas.addEventListener('mousedown', (e) => {
+                // Nếu là canvas tổ trưởng mà đang là nhân viên thì khóa
+                if(canvasId === 'ttCanvas' && currentRole === 'nhanvien') return;
+                drawingSig = true;
+                const pos = getSigPos(e);
+                sigCtx.beginPath();
+                sigCtx.moveTo(pos.x, pos.y);
+            });
+            sigCanvas.addEventListener('mousemove', (e) => {
+                if (!drawingSig) return;
+                const pos = getSigPos(e);
+                sigCtx.strokeStyle = '#0f172a';
+                sigCtx.lineWidth = 2;
+                sigCtx.lineTo(pos.x, pos.y);
+                sigCtx.stroke();
+            });
+            sigCanvas.addEventListener('mouseup', () => drawingSig = false);
+            sigCanvas.addEventListener('mouseout', () => drawingSig = false);
+            
+            // Touch
+            sigCanvas.addEventListener('touchstart', (e) => {
+                if(canvasId === 'ttCanvas' && currentRole === 'nhanvien') return;
+                e.preventDefault(); drawingSig = true;
+                const pos = getSigPos(e); sigCtx.beginPath(); sigCtx.moveTo(pos.x, pos.y);
+            }, {passive: false});
+            sigCanvas.addEventListener('touchmove', (e) => {
+                if (!drawingSig) return; e.preventDefault();
+                const pos = getSigPos(e); sigCtx.lineTo(pos.x, pos.y); sigCtx.stroke();
+            }, {passive: false});
+            sigCanvas.addEventListener('touchend', () => drawingSig = false);
+        }
+
+        initSignatureCanvas('nvCanvas');
+        initSignatureCanvas('ttCanvas');
+
+        function clearSignature(canvasId) {
+            if(canvasId === 'ttCanvas' && currentRole === 'nhanvien') {
+                alert("Chỉ Tổ trưởng mới có quyền xóa/ký mục này."); return;
+            }
+            const c = document.getElementById(canvasId);
+            const cx = c.getContext('2d');
+            cx.clearRect(0, 0, c.width, c.height);
+        }
+
+        // Xử lý resize để không bị lệch nét chữ ký
+        window.addEventListener('resize', () => {
+            // Lưu dữ liệu hiện tại
+            const nvData = document.getElementById('nvCanvas').toDataURL();
+            const ttData = document.getElementById('ttCanvas').toDataURL();
+            
+            initSignatureCanvas('nvCanvas');
+            initSignatureCanvas('ttCanvas');
+            
+            // Phục hồi (Cần viết thêm hàm drawImage nếu muốn giữ nguyên khi xoay màn hình)
+        });
+
+        // ==========================================
+        // 7. LƯU & TẢI TỪ SUPABASE
+        // ==========================================
+        async function savePlan() {
+            if (!supabase) {
+                alert("Bạn chưa cấu hình SUPABASE_URL và ANON_KEY trong mã nguồn.
+Vui lòng mở file code lên để điền Key trước khi dùng tính năng lưu đám mây.");
+                return;
+            }
+
+            const planData = {
+                id: document.getElementById('planId').value,
+                customer_name: document.getElementById('customerName').value,
+                address: document.getElementById('address').value,
+                capacity: document.getElementById('capacity').value,
+                gps: document.getElementById('gpsCoords').value,
+                status: currentStatus,
+                map_bg: document.getElementById('canvasContainer').style.backgroundImage,
+                sketch_data: canvas.toDataURL('image/png'),
+                sig_nv: document.getElementById('nvCanvas').toDataURL('image/png'),
+                name_nv: document.getElementById('nvName').value,
+                sig_tt: document.getElementById('ttCanvas').toDataURL('image/png'),
+                name_tt: document.getElementById('ttName').value,
+                updated_at: new Date().toISOString()
+            };
+
+            if(!planData.customer_name) {
+                alert("Vui lòng nhập Tên khách hàng!"); return;
+            }
+
+            try {
+                // Giả định bạn đã tạo Table: phuong_an_cap_dien
+                const { data, error } = await supabase
+                    .from('phuong_an_cap_dien')
+                    .upsert([{ 
+                        plan_id: planData.id,
+                        data_json: planData,
+                        status: planData.status
+                    }], { onConflict: 'plan_id' });
+                
+                if (error) throw error;
+                
+                // Chuyển sang trạng thái chờ duyệt nếu đang là Nháp
+                if(currentStatus === 'Nháp') {
+                    document.getElementById('docStatus').innerText = "Chờ Duyệt";
+                    document.getElementById('docStatus').className = "px-3 py-1 rounded-full text-sm font-bold status-choduyet";
+                    currentStatus = 'Pending';
+                }
+                
+                alert("Đã đồng bộ lên Supabase thành công!");
+            } catch (err) {
+                console.error(err);
+                alert("Lỗi khi lưu lên Supabase: " + err.message + "
+
+Hãy đảm bảo bạn đã tạo table 'phuong_an_cap_dien' với các cột: plan_id (PK), data_json (JSON), status (Text)");
+            }
+        }
+
+        async function loadPlans() {
+            if (!supabase) {
+                alert("Chưa cấu hình Supabase!"); return;
+            }
+            try {
+                const { data, error } = await supabase
+                    .from('phuong_an_cap_dien')
+                    .select('*')
+                    .order('created_at', { ascending: false })
+                    .limit(5); // Chỉ lấy 5 cái mới nhất ví dụ
+                
+                if (error) throw error;
+                
+                if(data && data.length > 0) {
+                    let msg = "Danh sách 5 phương án gần nhất:
+
+";
+                    data.forEach((item, index) => {
+                        msg += `${index+1}. [${item.plan_id}] - ${item.data_json.customer_name} (${item.status})
+`;
+                    });
+                    alert(msg + "
+(Tính năng Load chi tiết vào Form sẽ được viết mở rộng trong tương lai tuỳ nghiệp vụ)");
+                    console.log("Data từ Supabase:", data);
+                } else {
+                    alert("Chưa có dữ liệu nào trên hệ thống.");
+                }
+
+            } catch (err) {
+                console.error(err);
+                alert("Lỗi tải dữ liệu: " + err.message);
+            }
+        }
+
+    </script>
 </body>
 </html>
