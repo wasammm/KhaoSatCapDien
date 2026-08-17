@@ -1,438 +1,1727 @@
 <!DOCTYPE html>
 <html lang="vi">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Khảo Sát Cấp Điện - Điện Lực Rạch Giá</title>
-  
-  <!-- Supabase JS Client v2 -->
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  
-  <!-- Styling cơ bản & Hỗ trợ In ấn -->
-  <style>
-    :root {
-      --primary-color: #0056b3;
-      --border-color: #ccc;
-      --bg-light: #f8f9fa;
-    }
-    body {
-      font-family: Arial, sans-serif;
-      margin: 0;
-      padding: 15px;
-      background-color: #f4f6f9;
-      color: #333;
-    }
-    .container {
-      max-width: 900px;
-      margin: 0 auto;
-      background: #fff;
-      padding: 20px 30px;
-      border-radius: 8px;
-      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-    }
-    /* Letterhead / Tiêu đề đơn vị */
-    .letterhead {
-      display: flex;
-      justify-content: space-between;
-      text-align: center;
-      border-bottom: 2px solid #000;
-      padding-bottom: 10px;
-      margin-bottom: 20px;
-    }
-    .letterhead h4, .letterhead h5 { margin: 3px 0; }
-    
-    .form-group {
-      margin-bottom: 15px;
-    }
-    .form-group label {
-      display: block;
-      font-weight: bold;
-      margin-bottom: 5px;
-    }
-    .form-control {
-      width: 100%;
-      padding: 8px;
-      box-sizing: border-box;
-      border: 1px solid var(--border-color);
-      border-radius: 4px;
-    }
-    .grid-2 {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 15px;
-    }
-    
-    /* Canvas Area */
-    .canvas-container {
-      border: 1px solid var(--border-color);
-      background-color: #fff;
-      margin-top: 5px;
-      touch-action: none;
-    }
-    canvas {
-      display: block;
-      cursor: crosshair;
-    }
-    
-    /* Buttons */
-    .btn-group {
-      display: flex;
-      gap: 10px;
-      margin-top: 20px;
-    }
-    .btn {
-      padding: 10px 18px;
-      border: none;
-      border-radius: 4px;
-      cursor: pointer;
-      font-weight: bold;
-      color: #fff;
-    }
-    .btn-primary { background-color: #0056b3; }
-    .btn-success { background-color: #28a745; }
-    .btn-danger { background-color: #dc3545; }
-    .btn-secondary { background-color: #6c757d; }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1, user-scalable=no">
+<title>Khảo Sát Cấp Điện</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --navy:#122A4A;
+  --navy-2:#0B1B30;
+  --navy-3:#1B3A61;
+  --amber:#F5A623;
+  --amber-dark:#C97F0B;
+  --teal:#12A594;
+  --red:#D6483F;
+  --bg:#F0F2F0;
+  --card:#FFFFFF;
+  --ink:#15202B;
+  --muted:#5B6B7A;
+  --line:#DBE1E2;
+  --line-strong:#B9C3C6;
+  --radius:14px;
+  --font-display:'Space Grotesk',ui-sans-serif,system-ui,sans-serif;
+  --font-body:'Inter',ui-sans-serif,system-ui,sans-serif;
+  --font-mono:'IBM Plex Mono',ui-monospace,monospace;
+}
+*{box-sizing:border-box;}
+html,body{margin:0;padding:0;background:var(--bg);color:var(--ink);font-family:var(--font-body);-webkit-tap-highlight-color:transparent;}
+body{padding-bottom:76px;min-height:100vh;}
+button{font-family:inherit;cursor:pointer;}
+input,select,textarea{font-family:inherit;}
+::selection{background:var(--amber);color:var(--navy-2);}
 
-    /* Tables */
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      margin-top: 20px;
-    }
-    table, th, td { border: 1px solid #ddd; }
-    th, td { padding: 10px; text-align: left; }
-    th { background-color: var(--bg-light); }
+/* ---------- Header ---------- */
+.topbar{
+  position:sticky;top:0;z-index:40;
+  background:linear-gradient(180deg,var(--navy) 0%,var(--navy-2) 100%);
+  color:#fff;padding:14px 16px 12px;
+  box-shadow:0 2px 10px rgba(11,27,48,.25);
+}
+.topbar-row{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;}
+.brand{display:flex;align-items:center;gap:10px;min-width:0;}
+.brand-mark{width:34px;height:34px;border-radius:9px;background:var(--amber);display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.brand-mark svg{width:19px;height:19px;}
+.brand-text{line-height:1.15;min-width:0;overflow:hidden;}
+.brand-text .t1{font-family:var(--font-display);font-weight:700;font-size:15px;letter-spacing:.2px;white-space:nowrap;}
+.brand-text .t2{font-size:10.5px;color:#9FB2C8;letter-spacing:.6px;text-transform:uppercase;}
+.user-chip{display:flex;align-items:center;gap:8px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.14);padding:6px 10px 6px 6px;border-radius:999px;}
+.user-avatar{width:24px;height:24px;border-radius:50%;background:var(--amber);color:var(--navy-2);font-weight:700;font-size:11px;display:flex;align-items:center;justify-content:center;font-family:var(--font-display);}
+.user-chip .u-name{font-size:12px;font-weight:600;}
+.user-chip .u-role{font-size:9.5px;color:#A9BBCF;text-transform:uppercase;letter-spacing:.4px;}
+.logout-btn{display:flex;align-items:center;gap:5px;background:rgba(214,72,63,.16);border:1px solid rgba(214,72,63,.4);color:#FFD9D6;padding:8px 11px;border-radius:10px;font-size:11.5px;font-weight:700;flex-shrink:0;}
+.logout-btn svg{width:15px;height:15px;}
+.logout-btn:active{background:rgba(214,72,63,.3);}
+.sync-row{display:flex;align-items:center;gap:6px;margin-top:10px;font-size:11px;color:#B9C8D6;}
+.sync-dot{width:7px;height:7px;border-radius:50%;background:var(--teal);box-shadow:0 0 0 3px rgba(18,165,148,.25);}
+.sync-dot.busy{background:var(--amber);box-shadow:0 0 0 3px rgba(245,166,35,.25);animation:pulse 1s infinite;}
+.sync-dot.warn{background:var(--red);box-shadow:0 0 0 3px rgba(214,72,63,.25);}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
 
-    /* CSS Khi In (Print Style) */
-    @media print {
-      .no-print { display: none !important; }
-      body { background: #fff; padding: 0; }
-      .container { box-shadow: none; border: none; width: 100%; max-width: 100%; }
-    }
-  </style>
+/* ---------- Layout ---------- */
+.screen{max-width:640px;margin:0 auto;padding:16px 14px 30px;}
+.section-title{font-family:var(--font-display);font-weight:700;font-size:12.5px;letter-spacing:.8px;text-transform:uppercase;color:var(--navy);display:flex;align-items:center;gap:8px;margin:22px 0 10px;}
+.section-title .num{width:20px;height:20px;border-radius:6px;background:var(--navy);color:#fff;font-size:10.5px;display:flex;align-items:center;justify-content:center;font-family:var(--font-mono);flex-shrink:0;}
+.section-title:first-child{margin-top:4px;}
+.card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:16px;margin-bottom:12px;}
+
+.field{margin-bottom:13px;}
+.field label{display:block;font-size:12px;font-weight:600;color:var(--muted);margin-bottom:5px;letter-spacing:.1px;}
+.field .req{color:var(--red);}
+.input,.select,.textarea{
+  width:100%;border:1.5px solid var(--line-strong);border-radius:9px;padding:11px 12px;
+  font-size:14.5px;color:var(--ink);background:#fff;outline:none;transition:border-color .15s;
+}
+.input:focus,.select:focus,.textarea:focus{border-color:var(--navy-3);}
+.textarea{resize:vertical;min-height:64px;}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+.grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;}
+.hint{font-size:11px;color:var(--muted);margin-top:4px;}
+
+.choice-row{display:flex;gap:8px;flex-wrap:wrap;}
+.choice{
+  border:1.5px solid var(--line-strong);border-radius:9px;padding:9px 13px;font-size:13px;font-weight:600;
+  background:#fff;color:var(--muted);flex:1;text-align:center;min-width:110px;transition:.15s;
+}
+.choice.active{border-color:var(--navy);background:var(--navy);color:#fff;}
+.choice.active.amber{border-color:var(--amber-dark);background:var(--amber);color:var(--navy-2);}
+
+.btn{border:none;border-radius:10px;padding:12px 18px;font-weight:700;font-size:14px;display:inline-flex;align-items:center;justify-content:center;gap:7px;}
+.btn-primary{background:var(--navy);color:#fff;}
+.btn-primary:active{background:var(--navy-2);}
+.btn-amber{background:var(--amber);color:var(--navy-2);}
+.btn-teal{background:var(--teal);color:#fff;}
+.btn-red{background:var(--red);color:#fff;}
+.btn-ghost{background:#fff;color:var(--navy);border:1.5px solid var(--line-strong);}
+.btn-block{width:100%;}
+.btn-sm{padding:8px 12px;font-size:12.5px;border-radius:8px;}
+.btn:disabled{opacity:.45;pointer-events:none;}
+
+.badge{display:inline-flex;align-items:center;gap:5px;font-size:10.5px;font-weight:700;padding:4px 9px;border-radius:999px;letter-spacing:.3px;text-transform:uppercase;}
+.badge-draft{background:#E7E9EA;color:#54606B;}
+.badge-pending{background:#FDEBCC;color:#8A5A08;}
+.badge-approved{background:#D3F1EC;color:#0B7268;}
+.badge-rejected{background:#FADADA;color:#A32E27;}
+
+.plan-card{background:var(--card);border:1px solid var(--line);border-left:4px solid var(--navy);border-radius:12px;padding:13px 14px;margin-bottom:10px;}
+.plan-card.st-pending{border-left-color:var(--amber);}
+.plan-card.st-approved{border-left-color:var(--teal);}
+.plan-card.st-rejected{border-left-color:var(--red);}
+.plan-card .pc-top{display:flex;justify-content:space-between;align-items:flex-start;gap:8px;}
+.plan-card .pc-name{font-family:var(--font-display);font-weight:700;font-size:15px;}
+.plan-card .pc-addr{font-size:12.5px;color:var(--muted);margin-top:3px;}
+.plan-card .pc-meta{display:flex;justify-content:space-between;align-items:center;margin-top:10px;font-size:11px;color:var(--muted);}
+
+.empty{text-align:center;padding:48px 20px;color:var(--muted);}
+.empty svg{width:44px;height:44px;opacity:.35;margin-bottom:10px;}
+.empty .e-title{font-weight:700;color:var(--navy);margin-bottom:4px;font-family:var(--font-display);}
+
+/* diagram */
+.diagram-wrap{background:#F8F9F7;border:1px dashed var(--line-strong);border-radius:12px;padding:14px 10px 10px;}
+.diagram-wrap svg{width:100%;height:auto;display:block;}
+
+/* sketch drawing tool */
+.sketch-toolbar{display:flex;gap:6px;overflow-x:auto;padding-bottom:4px;margin-bottom:8px;-webkit-overflow-scrolling:touch;}
+.stool{flex-shrink:0;display:flex;flex-direction:column;align-items:center;gap:3px;border:1.5px solid var(--line-strong);background:#fff;color:var(--muted);border-radius:11px;padding:8px 11px;min-width:58px;}
+.stool svg{width:18px;height:18px;}
+.stool span{font-size:9.5px;font-weight:700;}
+.stool.active{border-color:var(--navy);background:var(--navy);color:#fff;}
+.sketch-wrap{border:1.5px solid var(--line-strong);border-radius:12px;overflow:hidden;background:#FAFBF9;touch-action:none;}
+#sketch-canvas{display:block;width:100%;height:300px;touch-action:none;}
+
+/* materials table */
+.mat-row{display:grid;grid-template-columns:2.4fr 0.8fr 0.8fr auto;gap:6px;align-items:center;margin-bottom:7px;}
+.mat-row input{padding:8px 9px;font-size:13px;}
+.mat-del{background:none;border:none;color:var(--red);font-size:17px;padding:4px 6px;}
+.chip{display:inline-block;background:#EDF1F0;border:1px solid var(--line);color:var(--navy);font-size:11.5px;padding:5px 10px;border-radius:999px;margin:0 6px 6px 0;font-weight:600;}
+.chip:active{background:var(--amber);}
+
+/* tabbar */
+.tabbar{position:fixed;bottom:0;left:0;right:0;background:#fff;border-top:1px solid var(--line);display:flex;z-index:40;box-shadow:0 -2px 10px rgba(0,0,0,.05);}
+.tab{flex:1;padding:9px 4px 10px;text-align:center;border:none;background:none;color:var(--muted);}
+.tab svg{width:21px;height:21px;display:block;margin:0 auto 3px;}
+.tab.active{color:var(--navy);}
+.tab .tlabel{font-size:10.5px;font-weight:700;}
+.fab{position:fixed;right:16px;bottom:82px;z-index:41;width:54px;height:54px;border-radius:50%;background:var(--amber);color:var(--navy-2);border:none;box-shadow:0 6px 16px rgba(245,166,35,.45);display:flex;align-items:center;justify-content:center;}
+.fab svg{width:24px;height:24px;}
+
+/* toast */
+.toast{position:fixed;left:50%;bottom:96px;transform:translateX(-50%);background:var(--navy-2);color:#fff;padding:11px 18px;border-radius:999px;font-size:13px;font-weight:600;z-index:99;box-shadow:0 6px 20px rgba(0,0,0,.25);display:flex;align-items:center;gap:8px;}
+
+/* modal (replaces native confirm/prompt) */
+.modal-overlay{position:fixed;inset:0;background:rgba(11,27,48,.55);z-index:200;display:flex;align-items:center;justify-content:center;padding:20px;}
+.modal-box{background:#fff;border-radius:16px;padding:22px 20px;max-width:340px;width:100%;box-shadow:0 20px 50px rgba(0,0,0,.3);}
+.modal-msg{font-size:14.5px;font-weight:600;color:var(--ink);line-height:1.45;}
+.modal-actions{display:flex;gap:10px;margin-top:18px;}
+
+/* filter chips */
+.filter-row{display:flex;gap:7px;overflow-x:auto;padding-bottom:2px;margin-bottom:14px;}
+.filter-chip{flex-shrink:0;border:1.5px solid var(--line-strong);background:#fff;color:var(--muted);font-size:12px;font-weight:700;padding:7px 13px;border-radius:999px;}
+.filter-chip.active{background:var(--navy);border-color:var(--navy);color:#fff;}
+
+.stat-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px;}
+.stat-card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:16px;}
+.stat-card .s-num{font-family:var(--font-display);font-weight:700;font-size:28px;color:var(--navy);}
+.stat-card .s-label{font-size:11.5px;color:var(--muted);font-weight:600;margin-top:2px;}
+.staff-bar-row{display:flex;align-items:center;gap:10px;margin-bottom:9px;}
+.staff-bar-row .sb-name{font-size:12.5px;font-weight:600;width:96px;flex-shrink:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.staff-bar-track{flex:1;height:9px;background:#E9EBE9;border-radius:6px;overflow:hidden;}
+.staff-bar-fill{height:100%;background:var(--navy-3);border-radius:6px;}
+.staff-bar-row .sb-count{font-family:var(--font-mono);font-size:12px;font-weight:600;color:var(--muted);width:20px;text-align:right;}
+
+.center-screen{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px;background:linear-gradient(160deg,var(--navy-2),var(--navy) 60%,var(--navy-3));}
+.onboard-card{background:#fff;border-radius:20px;padding:30px 26px;max-width:380px;width:100%;box-shadow:0 20px 50px rgba(0,0,0,.35);}
+.onboard-mark{width:52px;height:52px;border-radius:14px;background:var(--amber);display:flex;align-items:center;justify-content:center;margin-bottom:16px;}
+.onboard-mark svg{width:28px;height:28px;}
+.onboard-card h1{font-family:var(--font-display);font-size:20px;margin:0 0 4px;color:var(--navy);}
+.onboard-card p{font-size:13px;color:var(--muted);margin:0 0 22px;line-height:1.5;}
+
+.role-pick{display:flex;gap:10px;margin-bottom:4px;}
+.role-opt{flex:1;border:1.5px solid var(--line-strong);border-radius:12px;padding:14px 10px;text-align:center;background:#fff;}
+.role-opt.active{border-color:var(--navy);background:var(--navy);color:#fff;}
+.role-opt svg{width:20px;height:20px;margin-bottom:6px;}
+.role-opt .r-name{font-weight:700;font-size:13px;}
+.role-opt .r-sub{font-size:10.5px;opacity:.75;margin-top:1px;}
+
+.detail-block{margin-bottom:16px;}
+.detail-row{display:flex;justify-content:space-between;gap:10px;padding:8px 0;border-bottom:1px solid #EEF0EF;font-size:13.5px;}
+.detail-row:last-child{border-bottom:none;}
+.detail-row .dk{color:var(--muted);flex-shrink:0;}
+.detail-row .dv{font-weight:600;text-align:right;}
+.note-box{background:#FBF6EA;border:1px solid #F0DBA9;border-radius:10px;padding:12px 13px;font-size:13px;color:#7A5A08;}
+.note-box.rejected{background:#FBEBEA;border-color:#F0BCB9;color:#A32E27;}
+
+.back-row{display:flex;align-items:center;gap:8px;margin-bottom:14px;}
+
+/* letterhead (matches the paper form's header) */
+.letterhead{margin-bottom:16px;}
+.letterhead-row{display:flex;justify-content:space-between;gap:14px;}
+.lh-col{flex:1;text-align:center;}
+.lh-strong{font-size:11px;font-weight:700;color:var(--navy);line-height:1.4;text-transform:uppercase;}
+.lh-underline{font-size:11px;font-weight:600;color:var(--navy);text-decoration:underline;margin-top:1px;}
+.lh-title{text-align:center;font-family:var(--font-display);font-weight:700;font-size:17px;letter-spacing:.4px;margin-top:12px;color:var(--navy);}
+
+/* signature block */
+.sig-date{text-align:right;font-size:12.5px;font-style:italic;color:var(--muted);margin-bottom:12px;}
+.sig-grid{display:flex;flex-direction:column;gap:16px;}
+.sig-block{text-align:center;}
+.sig-caption{font-size:11.5px;font-weight:700;color:var(--navy);text-transform:uppercase;margin-top:4px;letter-spacing:.3px;}
+.sig-name{text-align:center;font-weight:600;margin-bottom:8px;}
+.sig-pad-wrap{border:1.5px dashed var(--line-strong);border-radius:10px;background:#FAFBF9;touch-action:none;}
+.sig-canvas{display:block;width:100%;height:120px;touch-action:none;}
+.sig-readonly{background:#F3F5F3;}
+.sig-readonly .sig-canvas{touch-action:auto;}
+.sig-reuse-tag{color:var(--teal);font-weight:600;text-transform:none;letter-spacing:0;}
+.sig-name:disabled{background:#F3F5F3;color:var(--muted);opacity:1;}
+@media print{
+  .sig-grid{flex-direction:row;gap:10px;}
+  .sig-block{flex:1;}
+  .sig-pad-wrap{background:#fff;}
+}
+.back-btn{background:#fff;border:1.5px solid var(--line-strong);border-radius:9px;width:36px;height:36px;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.back-btn svg{width:17px;height:17px;}
+.screen-title{font-family:var(--font-display);font-weight:700;font-size:18px;}
+
+@media print{
+  .topbar,.tabbar,.fab,.back-row,.no-print{display:none!important;}
+  body{padding:0;background:#fff;}
+}
+</style>
 </head>
 <body>
 
-<div class="container">
-  <!-- THÔNG TIN ĐƠN VỊ & QUỐC HIỆU -->
-  <div class="letterhead">
-    <div>
-      <h5>CÔNG TY ĐIỆN LỰC AN GIANG</h5>
-      <h4>ĐIỆN LỰC RẠCH GIÁ</h4>
-    </div>
-    <div>
-      <h4>CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM</h4>
-      <h5>Độc lập - Tự do - Hạnh phúc</h5>
-    </div>
-  </div>
+<div id="app"></div>
 
-  <h2 style="text-align: center; color: var(--primary-color);">BIÊN BẢN KHẢO SÁT CẤP ĐIỆN</h2>
-
-  <!-- THÔNG TIN TÀI KHOẢN -->
-  <div id="auth-section" class="no-print" style="background: var(--bg-light); padding: 10px; border-radius: 4px; margin-bottom: 20px;">
-    <span id="user-info">Đang kiểm tra đăng nhập...</span>
-    <button class="btn btn-secondary" style="float: right; padding: 4px 8px;" onclick="SurveyDB.logout()">Đăng xuất</button>
-  </div>
-
-  <!-- FORM KHẢO SÁT -->
-  <form id="survey-form">
-    <div class="grid-2">
-      <div class="form-group">
-        <label>Mã Phương Án:</label>
-        <input type="text" id="code" class="form-control" readonly placeholder="Tự động tạo khi lưu">
-      </div>
-      <div class="form-group">
-        <label>Tên Khách Hàng:</label>
-        <input type="text" id="customer_name" class="form-control" required placeholder="Nhập tên khách hàng">
-      </div>
-    </div>
-
-    <div class="grid-2">
-      <div class="form-group">
-        <label>Số Điện Thoại:</label>
-        <input type="text" id="customer_phone" class="form-control" placeholder="Nhập SĐT">
-      </div>
-      <div class="form-group">
-        <label>Địa Chỉ Khảo Sát:</label>
-        <input type="text" id="address" class="form-control" placeholder="Số nhà, đường, phường/xã">
-      </div>
-    </div>
-
-    <div class="form-group">
-      <label>Yêu Cầu Trụ Đỡ:</label>
-      <select id="can_tru_do" class="form-control">
-        <option value="khong">Không cần trụ đỡ</option>
-        <option value="co">Có cần trụ đỡ</option>
-      </select>
-    </div>
-
-    <!-- SƠ ĐỒ VẼ CẤP ĐIỆN -->
-    <div class="form-group">
-      <label>Sơ Đồ Kỹ Thuật (Vẽ trên Canvas):</label>
-      <div class="canvas-container">
-        <canvas id="sketch-canvas" width="840" height="300"></canvas>
-      </div>
-      <button type="button" class="btn btn-secondary no-print" style="margin-top: 5px;" onclick="clearCanvas('sketch-canvas')">Xóa vẽ lại</button>
-    </div>
-
-    <!-- KHU VỰC CHỮ KÝ -->
-    <div class="grid-2" style="margin-top: 30px;">
-      <div>
-        <label>Chữ Ký Khách Hàng:</label>
-        <div class="canvas-container">
-          <canvas id="sig-customer-canvas" width="400" height="120"></canvas>
-        </div>
-        <button type="button" class="btn btn-secondary no-print" style="margin-top: 5px;" onclick="clearCanvas('sig-customer-canvas')">Xóa chữ ký</button>
-      </div>
-      <div>
-        <label>Chữ Ký Nhân Viên Khảo Sát:</label>
-        <div class="canvas-container">
-          <canvas id="sig-staff-canvas" width="400" height="120"></canvas>
-        </div>
-        <button type="button" class="btn btn-secondary no-print" style="margin-top: 5px;" onclick="clearCanvas('sig-staff-canvas')">Xóa chữ ký</button>
-      </div>
-    </div>
-
-    <!-- THAO TÁC FORM -->
-    <div class="btn-group no-print">
-      <button type="button" class="btn btn-secondary" onclick="handleSave(false)">Lưu Nháp</button>
-      <button type="button" class="btn btn-primary" onclick="handleSave(true)">Gửi Duyệt</button>
-      <button type="button" class="btn btn-success" onclick="window.print()">In Biên Bản</button>
-    </div>
-  </form>
-
-  <hr style="margin: 40px 0;" class="no-print">
-
-  <!-- DANH SÁCH PHƯƠNG ÁN (DÀNH CHO NHÂN VIÊN & TỔ TRƯỞNG) -->
-  <div class="no-print">
-    <h3>Danh Sách Phương Án Khảo Sát</h3>
-    <table>
-      <thead>
-        <tr>
-          <th>Mã PA</th>
-          <th>Khách Hàng</th>
-          <th>Địa Chỉ</th>
-          <th>Trạng Thái</th>
-          <th>Thao Tác</th>
-        </tr>
-      </thead>
-      <tbody id="plans-table-body">
-        <tr><td colspan="5" style="text-align: center;">Đang tải dữ liệu...</td></tr>
-      </tbody>
-    </table>
-  </div>
-</div>
-
-<!-- KỊCH BẢN XỬ LÝ SUPABASE & GIAO DIỆN -->
 <script>
-  // ==========================================
-  // 1. CẤU HÌNH SUPABASE
-  // ==========================================
-  const SUPABASE_URL = 'https://YOUR_PROJECT_ID.supabase.co';
-  const SUPABASE_ANON_KEY = 'YOUR_ANON_KEY';
-  const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+/* ======================= CONFIG ======================= */
+const LEADER_PIN = "2024"; // Mã PIN để đăng ký vai trò Tổ trưởng — có thể đổi tại đây
+const ORG_NAME_1 = "CÔNG TY ĐIỆN LỰC AN GIANG"; // Dòng 1 tiêu đề đơn vị — đổi theo đơn vị của bạn
+const ORG_NAME_2 = "ĐIỆN LỰC RẠCH GIÁ";          // Dòng 2 tiêu đề đơn vị
+const STATUS_LABEL = {draft:"Nháp", pending:"Chờ duyệt", approved:"Đã duyệt", rejected:"Từ chối"};
+const COMMON_MATERIALS = [
+  "Điện kế điện tử 1P TT 220V-10-(40)A|Cái",
+  "CB 1 pha 2 cực 40A|Cái",
+  "Cáp Muller 2*10mm2|mét",
+  "Cáp Duplex 2*10mm2|m",
+  "Hộp 1 công tơ 1P Composite|Cái",
+  "Kẹp rẽ nhánh 95-35|Cái",
+  "Ống PVC Phi 27|m",
+  "Đai thép 20x0.4mm|m",
+  "Khoá đai 20x0.4mm|Cái"
+];
 
-  // ==========================================
-  // 2. TẬP HỢP HÀM XỬ LÝ DỮ LIỆU (SUPABASE SERVICE)
-  // ==========================================
-  const SurveyDB = {
-    async getCurrentUser() {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return null;
-      const { data: profile } = await supabase.from('profiles').select('*').eq('id', user.id).single();
-      return { ...user, profile };
-    },
+/* ======================= STATE ======================= */
+let state = {
+  profile: null,
+  route: "loading",     // loading | onboard | staffList | leaderList | leaderStats | form | detail
+  index: [],
+  filterStatus: "all",
+  filterStaff: "all",
+  search: "",
+  currentPlan: null,
+  toast: null,
+  syncing: false,
+  onboardDraft: {name:"", role:"staff", pin:""},
+  modal: null // {kind:'confirm'|'prompt', message, defaultValue, onOk, onCancel}
+};
 
-    async logout() {
-      await supabase.auth.signOut();
-      window.location.reload();
-    },
-
-    async fetchPlans() {
-      const { data, error } = await supabase.from('plans').select('*').order('created_at', { ascending: false });
-      if (error) console.error('Lỗi lấy danh sách:', error);
-      return data || [];
-    },
-
-    async savePlan(formData, isSubmit = false) {
-      const user = await this.getCurrentUser();
-      
-      const payload = {
-        code: formData.code || `PA-${Date.now()}`,
-        customer_name: formData.customer_name,
-        customer_phone: formData.customer_phone,
-        address: formData.address,
-        survey_data: formData,
-        sketch_image: getCanvasData('sketch-canvas'),
-        sig_customer: getCanvasData('sig-customer-canvas'),
-        sig_staff: getCanvasData('sig-staff-canvas'),
-        status: isSubmit ? 'pending' : (formData.status || 'draft'),
-        created_by: user ? user.id : null
-      };
-
-      const { data, error } = await supabase.from('plans').upsert([payload], { onConflict: 'code' }).select();
-      if (error) throw error;
-      return data[0];
-    },
-
-    async updateStatus(planId, status, rejectionReason = '') {
-      const user = await this.getCurrentUser();
-      const { data, error } = await supabase
-        .from('plans')
-        .update({ status, rejection_reason: rejectionReason, approved_by: user ? user.id : null })
-        .eq('id', planId)
-        .select();
-      if (error) throw error;
-      return data[0];
-    },
-
-    subscribe(callback) {
-      return supabase.channel('plans-realtime').on('postgres_changes', { event: '*', schema: 'public', table: 'plans' }, callback).subscribe();
+/* ======================= STORAGE ADAPTER =======================
+   Uses Claude's built-in cloud storage (window.storage) when this app
+   is running as a Claude Artifact — that is what makes data sync
+   between the tablet and the PC over the internet.
+   If the file is ever opened directly in a browser (file:// or a plain
+   static host) that API does not exist, so we fall back to this
+   device's own localStorage instead of crashing. In that fallback mode
+   nothing syncs between devices — see the banner in the header. */
+const hasCloudSync = (typeof window.storage !== 'undefined');
+const storage = hasCloudSync ? window.storage : {
+  async get(key, shared){
+    const v = localStorage.getItem((shared?'shared:':'local:')+key);
+    if(v===null) throw new Error('not found');
+    return {key, value:v, shared: !!shared};
+  },
+  async set(key, value, shared){
+    localStorage.setItem((shared?'shared:':'local:')+key, value);
+    return {key, value, shared: !!shared};
+  },
+  async delete(key, shared){
+    localStorage.removeItem((shared?'shared:':'local:')+key);
+    return {key, deleted:true, shared: !!shared};
+  },
+  async list(prefix, shared){
+    const pfx = (shared?'shared:':'local:') + (prefix||'');
+    const keys = [];
+    for(let i=0;i<localStorage.length;i++){
+      const k = localStorage.key(i);
+      if(k && k.startsWith(pfx)) keys.push(k.slice((shared?'shared:':'local:').length));
     }
+    return {keys, prefix, shared: !!shared};
+  }
+};
+
+/* ======================= STORAGE HELPERS ======================= */
+async function loadProfile(){
+  try{ const r = await storage.get('profile', false); return r ? JSON.parse(r.value) : null; }
+  catch(e){ return null; }
+}
+async function saveProfile(p){ await storage.set('profile', JSON.stringify(p), false); }
+async function clearProfile(){ try{ await storage.delete('profile', false); }catch(e){} }
+
+async function loadIndex(){
+  try{ const r = await storage.get('plans-index', true); return r ? JSON.parse(r.value) : []; }
+  catch(e){ return []; }
+}
+async function saveIndex(arr){ await storage.set('plans-index', JSON.stringify(arr), true); }
+
+async function loadPlan(id){
+  try{ const r = await storage.get('plan:'+id, true); return r ? JSON.parse(r.value) : null; }
+  catch(e){ return null; }
+}
+async function savePlanFull(plan){
+  state.syncing = true; renderTopbarOnly();
+  await storage.set('plan:'+plan.id, JSON.stringify(plan), true);
+  let idx = await loadIndex();
+  const summary = {
+    id: plan.id, ten_khach_hang: plan.ten_khach_hang, dia_chi: plan.dia_chi,
+    created_by: plan.created_by, created_at: plan.created_at, updated_at: plan.updated_at,
+    status: plan.status, ngay_lap: plan.ngay_lap
   };
+  const i = idx.findIndex(p=>p.id===plan.id);
+  if(i>=0) idx[i] = summary; else idx.unshift(summary);
+  await saveIndex(idx);
+  state.index = idx;
+  state.syncing = false;
+}
+async function deletePlanById(id){
+  state.syncing = true; renderTopbarOnly();
+  try{ await storage.delete('plan:'+id, true); }catch(e){}
+  let idx = await loadIndex();
+  idx = idx.filter(p=>p.id!==id);
+  await saveIndex(idx);
+  state.index = idx;
+  state.syncing = false;
+}
 
-  // ==========================================
-  // 3. XỬ LÝ VẼ CANVAS (SKETCH & SIGNATURE)
-  // ==========================================
-  function initCanvas(canvasId) {
-    const canvas = document.getElementById(canvasId);
-    if (!canvas) return;
-    const ctx = canvas.getContext('2d');
-    let isDrawing = false;
+function uid(){ return Date.now().toString(36) + Math.random().toString(36).slice(2,7); }
+function nowISO(){ return new Date().toISOString(); }
+function fmtDate(iso){
+  if(!iso) return "—";
+  const d = new Date(iso);
+  return d.toLocaleDateString('vi-VN') + " " + d.toLocaleTimeString('vi-VN',{hour:'2-digit',minute:'2-digit'});
+}
+function initials(name){
+  if(!name) return "?";
+  const parts = name.trim().split(/\s+/);
+  return (parts[parts.length-1][0]||"?").toUpperCase();
+}
+function showToast(msg){
+  state.toast = msg;
+  render();
+  setTimeout(()=>{ state.toast = null; render(); }, 2200);
+}
 
-    function getPos(e) {
-      const rect = canvas.getBoundingClientRect();
-      const clientX = e.touches ? e.touches[0].clientX : e.clientX;
-      const clientY = e.touches ? e.touches[0].clientY : e.clientY;
-      return { x: clientX - rect.left, y: clientY - rect.top };
-    }
+/* ======================= MODAL (replaces confirm()/prompt()) =======================
+   Native confirm()/prompt() can be silently blocked by the sandboxed
+   iframe this app runs in as a Claude Artifact, so all confirmations
+   and text-entry prompts use this in-app modal instead. */
+function openConfirm(message, onOk){
+  state.modal = {kind:'confirm', message, onOk};
+  render();
+}
+function openPrompt(message, defaultValue, onOk){
+  state.modal = {kind:'prompt', message, defaultValue: defaultValue||'', onOk};
+  render();
+}
+function closeModal(){ state.modal = null; render(); }
 
-    function startDraw(e) { isDrawing = true; const p = getPos(e); ctx.beginPath(); ctx.moveTo(p.x, p.y); }
-    function draw(e) {
-      if (!isDrawing) return;
-      const p = getPos(e);
-      ctx.lineTo(p.x, p.y);
-      ctx.stroke();
-    }
-    function stopDraw() { isDrawing = false; }
+function renderModal(){
+  const m = state.modal;
+  if(!m) return '';
+  return `
+  <div class="modal-overlay" id="modal-overlay">
+    <div class="modal-box">
+      <div class="modal-msg">${escapeHtml(m.message)}</div>
+      ${m.kind==='prompt' ? `<input class="input" id="modal-input" value="${escapeHtml(m.defaultValue)}" style="margin-top:12px;">` : ''}
+      <div class="modal-actions">
+        <button class="btn btn-ghost btn-block" id="modal-cancel">Hủy</button>
+        <button class="btn btn-primary btn-block" id="modal-ok">${m.kind==='prompt' ? 'Lưu' : 'Xác nhận'}</button>
+      </div>
+    </div>
+  </div>`;
+}
+function bindModal(){
+  const m = state.modal;
+  if(!m) return;
+  const overlay = document.getElementById('modal-overlay');
+  const cancelBtn = document.getElementById('modal-cancel');
+  const okBtn = document.getElementById('modal-ok');
+  const input = document.getElementById('modal-input');
+  if(input){ input.focus(); input.select(); }
+  const doCancel = ()=>{ closeModal(); };
+  const doOk = async ()=>{
+    const val = m.kind==='prompt' ? (input ? input.value : '') : true;
+    const cb = m.onOk;
+    state.modal = null;
+    if(cb) await cb(val);
+    render();
+  };
+  if(overlay) overlay.onclick = (e)=>{ if(e.target===overlay) doCancel(); };
+  if(cancelBtn) cancelBtn.onclick = doCancel;
+  if(okBtn) okBtn.onclick = doOk;
+  if(input) input.onkeydown = e=>{ if(e.key==='Enter'){ e.preventDefault(); doOk(); } };
+}
 
-    canvas.addEventListener('mousedown', startDraw);
-    canvas.addEventListener('mousemove', draw);
-    canvas.addEventListener('mouseup', stopDraw);
-    canvas.addEventListener('touchstart', startDraw);
-    canvas.addEventListener('touchmove', draw);
-    canvas.addEventListener('touchend', stopDraw);
+/* ======================= BLANK PLAN ======================= */
+function blankPlan(){
+  return {
+    id: uid(),
+    status: "draft",
+    created_by: state.profile ? state.profile.name : "",
+    created_at: nowISO(),
+    updated_at: nowISO(),
+    ngay_lap: new Date().toISOString().slice(0,10),
+    // I. Thông tin khách hàng
+    ten_khach_hang:"", danh_so_lien_ke:"", dia_chi:"", sdt:"",
+    // II.1
+    muc_dich:"Sinh hoạt", so_ho_dung_chung:"1", loai_nha:"Nhà tường",
+    // II.2
+    tram_dau_noi:"", cong_suat_dat:"", i_dm:"", i_max:"", pha_dau_noi:"A",
+    // II.3
+    vi_tri_dien_ke:"cot", // 'cot' | 'nha'
+    gps_toa_do:"", khoang_cach_tru:"", ghi_chu_so_do:"",
+    sketch: {paths:[], stamps:[], texts:[]}, sketch_image:"",
+    signatures: {
+      duyet: {paths:[], name:""},
+      khach_hang: {paths:[], name:""},
+      nguoi_lap: {paths:[], name:""}
+    },
+    // II.5 nhận xét
+    phu_tai:"du", khoang_cach_tram:"", khoang_cach_dat:"co", chat_luong_ap:"220", dien_ap_dat:"co",
+    giay_ung_thuan:"khong", do_cao_day:"", can_tru_do:"khong", tru_do_met:"",
+    // vật tư
+    vat_tu:[],
+    // kết luận
+    ket_luan:"dong_y", ly_do_khong_dong_y:"",
+    // duyệt
+    leader_note:"", approved_by:"", approved_at:""
+  };
+}
+
+/* ======================= ICONS ======================= */
+const ICO = {
+  bolt:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2 3 14h7l-1 8 10-12h-7l1-8z"/></svg>',
+  list:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></svg>',
+  plus:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>',
+  chart:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18M8 17V9m5 8V5m5 12v-6"/></svg>',
+  back:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>',
+  staff:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4.4 3.6-7 8-7s8 2.6 8 7"/></svg>',
+  leader:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8l4 3 5-6 5 6 4-3-2 11H5L3 8z"/></svg>',
+  empty:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 2h6l6 6v12a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2z"/><path d="M9 15h6M9 11h3"/></svg>',
+  pin:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s7-6.6 7-11.5A7 7 0 0 0 5 9.5C5 14.4 12 21 12 21z"/><circle cx="12" cy="9.5" r="2.3"/></svg>',
+  logout:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/></svg>',
+  check:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>',
+  x:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18M6 6l12 12"/></svg>',
+  print:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9V2h12v7M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2M6 14h12v8H6z"/></svg>',
+  pen:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5z"/></svg>',
+  road:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20 9 4h6l5 16M8.5 16h7"/></svg>',
+  wire:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6c4 0 4 5 8 5s4-5 8-5M4 18c4 0 4-5 8-5s4 5 8 5"/></svg>',
+  stampTram:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8"/><path d="M13 8l-4 5h3l-1 4 4-5h-3l1-4z" fill="currentColor" stroke="none"/></svg>',
+  stampTru:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v20M6 6h12M7 11h10M8 16h8"/></svg>',
+  stampMeter:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="5" width="16" height="14" rx="2"/><circle cx="12" cy="12" r="4"/><path d="M12 9v3l2 1.5"/></svg>',
+  stampHouse:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11l9-7 9 7"/><path d="M5 10v10h14V10"/></svg>',
+  tag:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.6 12.6 12 21.2a2 2 0 0 1-2.8 0L3.4 15.4a2 2 0 0 1 0-2.8L12 4h6a2 2 0 0 1 2 2v6.6z"/><circle cx="15" cy="9" r="1.3" fill="currentColor" stroke="none"/></svg>',
+  eraser:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 20H8l-6-6 10-10 8 8-8 8"/><path d="M14 6l6 6"/></svg>',
+  copy:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>'
+};
+
+/* ======================= RENDER ROOT ======================= */
+async function boot(){
+  const p = await loadProfile();
+  if(p){
+    state.profile = p;
+    state.syncing = true; render();
+    state.index = await loadIndex();
+    state.syncing = false;
+    state.route = p.role === 'leader' ? 'leaderList' : 'staffList';
+  } else {
+    state.route = 'onboard';
   }
+  render();
+}
 
-  function clearCanvas(canvasId) {
-    const canvas = document.getElementById(canvasId);
-    const ctx = canvas.getContext('2d');
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
+function renderTopbarOnly(){
+  const el = document.getElementById('sync-dot');
+  if(el){ el.className = 'sync-dot' + (state.syncing ? ' busy' : ''); }
+}
+
+function render(){
+  const app = document.getElementById('app');
+  if(state.route === 'loading'){
+    app.innerHTML = `<div class="center-screen"><div style="color:#fff;font-family:var(--font-display);font-weight:600;">Đang tải…</div></div>`;
+    return;
   }
+  if(state.route === 'onboard'){ app.innerHTML = viewOnboard(); bindOnboard(); return; }
 
-  function getCanvasData(canvasId) {
-    const canvas = document.getElementById(canvasId);
-    return canvas ? canvas.toDataURL('image/png') : null;
+  let body = "";
+  if(state.route === 'staffList') body = viewStaffList();
+  else if(state.route === 'leaderList') body = viewLeaderList();
+  else if(state.route === 'leaderStats') body = viewLeaderStats();
+  else if(state.route === 'form') body = viewForm();
+  else if(state.route === 'detail') body = viewDetail();
+
+  app.innerHTML = `
+    ${topbar()}
+    ${body}
+    ${state.route!=='form' ? tabbar() : ""}
+    ${(state.route==='staffList') ? fab() : ""}
+    ${state.toast ? `<div class="toast">${state.toast}</div>` : ""}
+    ${renderModal()}
+  `;
+  bindGlobal();
+  bindModal();
+}
+
+/* ======================= TOPBAR / TABBAR ======================= */
+function topbar(){
+  const p = state.profile;
+  return `
+  <div class="topbar">
+    <div class="topbar-row">
+      <div class="brand">
+        <div class="brand-mark">${ICO.bolt}</div>
+        <div class="brand-text">
+          <div class="t1">Khảo Sát Cấp Điện</div>
+          <div class="t2">Điện lực Rạch Giá</div>
+        </div>
+      </div>
+      <div style="display:flex;align-items:center;gap:8px;">
+        <div class="user-chip">
+          <div class="user-avatar">${initials(p.name)}</div>
+          <div>
+            <div class="u-name">${escapeHtml(p.name)}</div>
+            <div class="u-role">${p.role==='leader' ? 'Tổ trưởng' : 'Nhân viên'}</div>
+          </div>
+        </div>
+        <button class="logout-btn" id="btn-logout" title="Thoát / Đổi người dùng">${ICO.logout}<span>Thoát</span></button>
+      </div>
+    </div>
+    <div class="sync-row">
+      <span class="sync-dot${state.syncing?' busy':''}${hasCloudSync?'':' warn'}" id="sync-dot"></span>
+      <span>${hasCloudSync ? (state.syncing ? 'Đang đồng bộ dữ liệu…' : 'Đã đồng bộ — dữ liệu dùng chung cho cả tổ') : 'Không đồng bộ — đang chạy ngoài Claude, dữ liệu chỉ lưu trên máy này'}</span>
+    </div>
+  </div>`;
+}
+
+function tabbar(){
+  const p = state.profile;
+  if(p.role === 'leader'){
+    return `
+    <div class="tabbar">
+      <button class="tab ${state.route==='leaderList'?'active':''}" data-nav="leaderList">${ICO.list}<div class="tlabel">Tất cả</div></button>
+      <button class="tab ${state.route==='leaderStats'?'active':''}" data-nav="leaderStats">${ICO.chart}<div class="tlabel">Thống kê</div></button>
+    </div>`;
   }
+  return `
+    <div class="tabbar">
+      <button class="tab ${state.route==='staffList'?'active':''}" data-nav="staffList">${ICO.list}<div class="tlabel">Phương án</div></button>
+      <button class="tab" data-newplan="1">${ICO.plus}<div class="tlabel">Lập mới</div></button>
+    </div>`;
+}
 
-  // ==========================================
-  // 4. LOGIC GIAO DIỆN VÀ SỰ KIỆN
-  // ==========================================
-  document.addEventListener('DOMContentLoaded', async () => {
-    // Khởi tạo tính năng vẽ cho các canvas
-    ['sketch-canvas', 'sig-customer-canvas', 'sig-staff-canvas'].forEach(initCanvas);
+function fab(){
+  return `<button class="fab" id="fab-new">${ICO.plus}</button>`;
+}
 
-    // Kiểm tra đăng nhập
-    const user = await SurveyDB.getCurrentUser();
-    const infoElem = document.getElementById('user-info');
-    if (user) {
-      infoElem.innerText = `Tài khoản: ${user.profile?.full_name || user.email} (${user.profile?.role || 'nhan_vien'})`;
-    } else {
-      infoElem.innerText = 'Chưa đăng nhập (Đang sử dụng chế độ Khách)';
-    }
+/* ======================= ONBOARD ======================= */
+function viewOnboard(){
+  const d = state.onboardDraft;
+  return `
+  <div class="center-screen">
+    <div class="onboard-card">
+      <div class="onboard-mark">${ICO.bolt}</div>
+      <h1>Khảo Sát Cấp Điện</h1>
+      <p>Ứng dụng lập phương án khảo sát cấp điện tại hiện trường. Nhập tên và chọn vai trò để bắt đầu — dữ liệu sẽ tự đồng bộ cho cả tổ qua internet.</p>
+      <div class="field">
+        <label>Họ và tên <span class="req">*</span></label>
+        <input class="input" id="ob-name" placeholder="VD: Nguyễn Văn Lư" value="${escapeHtml(d.name)}">
+      </div>
+      <div class="field">
+        <label>Vai trò</label>
+        <div class="role-pick">
+          <div class="role-opt ${d.role==='staff'?'active':''}" data-role="staff">
+            ${ICO.staff}<div class="r-name">Nhân viên</div><div class="r-sub">Lập phương án</div>
+          </div>
+          <div class="role-opt ${d.role==='leader'?'active':''}" data-role="leader">
+            ${ICO.leader}<div class="r-name">Tổ trưởng</div><div class="r-sub">Duyệt phương án</div>
+          </div>
+        </div>
+      </div>
+      ${d.role==='leader' ? `
+      <div class="field">
+        <label>Mã PIN Tổ trưởng <span class="req">*</span></label>
+        <input class="input" id="ob-pin" type="password" inputmode="numeric" placeholder="••••" value="${escapeHtml(d.pin)}">
+        <div class="hint">Liên hệ quản trị đơn vị nếu chưa có mã PIN.</div>
+      </div>` : ``}
+      <button class="btn btn-primary btn-block" id="ob-submit" style="margin-top:6px;">Bắt đầu sử dụng</button>
+    </div>
+  </div>`;
+}
+function bindOnboard(){
+  const nameEl = document.getElementById('ob-name');
+  nameEl.oninput = e => state.onboardDraft.name = e.target.value;
+  document.querySelectorAll('.role-opt').forEach(el=>{
+    el.onclick = ()=>{ state.onboardDraft.role = el.dataset.role; render(); };
+  });
+  const pinEl = document.getElementById('ob-pin');
+  if(pinEl) pinEl.oninput = e => state.onboardDraft.pin = e.target.value;
+  document.getElementById('ob-submit').onclick = async ()=>{
+    const d = state.onboardDraft;
+    if(!d.name || !d.name.trim()){ showToast('Vui lòng nhập họ tên'); return; }
+    if(d.role==='leader' && d.pin !== LEADER_PIN){ showToast('Mã PIN Tổ trưởng không đúng'); return; }
+    const profile = {name:d.name.trim(), role:d.role};
+    await saveProfile(profile);
+    state.profile = profile;
+    state.index = await loadIndex();
+    state.route = d.role==='leader' ? 'leaderList' : 'staffList';
+    render();
+  };
+}
 
-    // Tải danh sách & Bật Realtime
-    await loadPlansTable();
-    SurveyDB.subscribe(() => loadPlansTable());
+/* ======================= STAFF LIST ======================= */
+function viewStaffList(){
+  const mine = state.index.filter(p => p.created_by === state.profile.name);
+  let list = mine;
+  if(state.filterStatus !== 'all') list = list.filter(p=>p.status===state.filterStatus);
+  list = [...list].sort((a,b)=> new Date(b.updated_at||b.created_at) - new Date(a.updated_at||a.created_at));
+
+  const chips = ['all','draft','pending','approved','rejected'].map(s=>{
+    const label = s==='all' ? 'Tất cả' : STATUS_LABEL[s];
+    return `<button class="filter-chip ${state.filterStatus===s?'active':''}" data-filter="${s}">${label}</button>`;
+  }).join('');
+
+  return `
+  <div class="screen">
+    <div class="screen-title" style="margin-bottom:12px;">Phương án của tôi</div>
+    <div class="filter-row">${chips}</div>
+    ${list.length===0 ? emptyState('Chưa có phương án','Nhấn nút + để lập phương án khảo sát mới ngoài hiện trường.') :
+      list.map(planCard).join('')}
+  </div>`;
+}
+
+function emptyState(title, sub){
+  return `<div class="empty">${ICO.empty}<div class="e-title">${title}</div><div>${sub}</div></div>`;
+}
+
+function planCard(p){
+  return `
+  <div class="plan-card st-${p.status}" data-open="${p.id}">
+    <div class="pc-top">
+      <div>
+        <div class="pc-name">${escapeHtml(p.ten_khach_hang || 'Chưa có tên')}</div>
+        <div class="pc-addr">${escapeHtml(p.dia_chi || 'Chưa có địa chỉ')}</div>
+      </div>
+      <span class="badge badge-${p.status}">${STATUS_LABEL[p.status]}</span>
+    </div>
+    <div class="pc-meta">
+      <span>${escapeHtml(p.created_by||'')}</span>
+      <span>${fmtDate(p.updated_at||p.created_at)}</span>
+    </div>
+  </div>`;
+}
+
+/* ======================= LEADER LIST ======================= */
+function viewLeaderList(){
+  let list = [...state.index];
+  if(state.filterStatus !== 'all') list = list.filter(p=>p.status===state.filterStatus);
+  if(state.filterStaff !== 'all') list = list.filter(p=>p.created_by===state.filterStaff);
+  list = list.sort((a,b)=> new Date(b.updated_at||b.created_at) - new Date(a.updated_at||a.created_at));
+
+  const staffNames = [...new Set(state.index.map(p=>p.created_by).filter(Boolean))];
+  const statusChips = ['all','pending','approved','rejected','draft'].map(s=>{
+    const label = s==='all' ? 'Tất cả' : STATUS_LABEL[s];
+    return `<button class="filter-chip ${state.filterStatus===s?'active':''}" data-filter="${s}">${label}</button>`;
+  }).join('');
+
+  return `
+  <div class="screen">
+    <div class="screen-title" style="margin-bottom:12px;">Phương án của cả tổ</div>
+    <div class="filter-row">${statusChips}</div>
+    ${staffNames.length>1 ? `
+    <div class="field">
+      <select class="select" id="staff-filter">
+        <option value="all">Tất cả nhân viên</option>
+        ${staffNames.map(n=>`<option value="${escapeHtml(n)}" ${state.filterStaff===n?'selected':''}>${escapeHtml(n)}</option>`).join('')}
+      </select>
+    </div>` : ``}
+    ${list.length===0 ? emptyState('Chưa có phương án nào','Danh sách sẽ hiển thị khi nhân viên gửi phương án lên.') :
+      list.map(planCard).join('')}
+  </div>`;
+}
+
+/* ======================= LEADER STATS ======================= */
+function viewLeaderStats(){
+  const idx = state.index;
+  const counts = {draft:0,pending:0,approved:0,rejected:0};
+  const byStaff = {};
+  idx.forEach(p=>{
+    counts[p.status] = (counts[p.status]||0)+1;
+    byStaff[p.created_by] = (byStaff[p.created_by]||0)+1;
+  });
+  const maxStaff = Math.max(1, ...Object.values(byStaff));
+  const staffRows = Object.entries(byStaff).sort((a,b)=>b[1]-a[1]).map(([name,count])=>`
+    <div class="staff-bar-row">
+      <div class="sb-name">${escapeHtml(name||'—')}</div>
+      <div class="staff-bar-track"><div class="staff-bar-fill" style="width:${(count/maxStaff*100).toFixed(0)}%"></div></div>
+      <div class="sb-count">${count}</div>
+    </div>`).join('') || `<div class="hint">Chưa có dữ liệu.</div>`;
+
+  return `
+  <div class="screen">
+    <div class="screen-title" style="margin-bottom:12px;">Thống kê</div>
+    <div class="stat-grid">
+      <div class="stat-card"><div class="s-num">${idx.length}</div><div class="s-label">Tổng số phương án</div></div>
+      <div class="stat-card"><div class="s-num" style="color:var(--amber-dark)">${counts.pending||0}</div><div class="s-label">Chờ duyệt</div></div>
+      <div class="stat-card"><div class="s-num" style="color:var(--teal)">${counts.approved||0}</div><div class="s-label">Đã duyệt</div></div>
+      <div class="stat-card"><div class="s-num" style="color:var(--red)">${counts.rejected||0}</div><div class="s-label">Từ chối</div></div>
+    </div>
+    <div class="section-title"><span class="num">#</span>Số lượng theo nhân viên</div>
+    <div class="card">${staffRows}</div>
+  </div>`;
+}
+
+/* ======================= FORM (create / edit) ======================= */
+function viewForm(){
+  const p = state.currentPlan;
+  const readOnly = false;
+  return `
+  <div class="screen">
+    <div class="back-row">
+      <button class="back-btn" data-nav="${state.profile.role==='leader'?'leaderList':'staffList'}">${ICO.back}</button>
+      <div class="screen-title">${p.status==='draft' ? 'Lập phương án mới' : 'Chỉnh sửa phương án'}</div>
+    </div>
+
+    <div class="section-title"><span class="num">I</span>Thông tin khách hàng</div>
+    <div class="card">
+      <div class="field"><label>Tên khách hàng <span class="req">*</span></label>
+        <input class="input" data-f="ten_khach_hang" value="${escapeHtml(p.ten_khach_hang)}" placeholder="Nguyễn Thị Bích Lê"></div>
+      <div class="grid2">
+        <div class="field"><label>Số điện thoại</label>
+          <input class="input" data-f="sdt" value="${escapeHtml(p.sdt)}" placeholder="09xxxxxxxx"></div>
+        <div class="field"><label>Danh số liền kề</label>
+          <input class="input" data-f="danh_so_lien_ke" value="${escapeHtml(p.danh_so_lien_ke)}"></div>
+      </div>
+      <div class="field"><label>Địa chỉ (thửa/số nhà, đường, phường, tỉnh)</label>
+        <textarea class="textarea" data-f="dia_chi" placeholder="Thửa 338 đường Bùi Viện, phường Rạch Giá, tỉnh An Giang">${escapeHtml(p.dia_chi)}</textarea></div>
+    </div>
+
+    <div class="section-title"><span class="num">II</span>Mục đích &amp; loại nhà</div>
+    <div class="card">
+      <div class="field"><label>Mục đích sử dụng điện</label>
+        <div class="choice-row">
+          ${choiceBtn('muc_dich','Sinh hoạt',p.muc_dich)}
+          ${choiceBtn('muc_dich','Kinh doanh',p.muc_dich)}
+          ${choiceBtn('muc_dich','Khác',p.muc_dich)}
+        </div></div>
+      <div class="grid2">
+        <div class="field"><label>Số hộ dùng chung</label>
+          <input class="input" data-f="so_ho_dung_chung" inputmode="numeric" value="${escapeHtml(p.so_ho_dung_chung)}"></div>
+        <div class="field"><label>Loại nhà</label>
+          <select class="select" data-f="loai_nha">
+            ${["Nhà tường","Nhà tôn","Nhà lá","Nhà tạm","Khác"].map(o=>`<option ${p.loai_nha===o?'selected':''}>${o}</option>`).join('')}
+          </select></div>
+      </div>
+    </div>
+
+    <div class="section-title"><span class="num">II.2</span>Trạm đấu nối &amp; công suất</div>
+    <div class="card">
+      <div class="field"><label>Trạm đấu nối</label>
+        <input class="input" data-f="tram_dau_noi" value="${escapeHtml(p.tram_dau_noi)}" placeholder="Bùi Viện"></div>
+      <div class="grid3">
+        <div class="field"><label>Công suất (KVA)</label><input class="input" data-f="cong_suat_dat" inputmode="decimal" value="${escapeHtml(p.cong_suat_dat)}"></div>
+        <div class="field"><label>I_ĐM (A)</label><input class="input" data-f="i_dm" inputmode="decimal" value="${escapeHtml(p.i_dm)}"></div>
+        <div class="field"><label>I_MAX</label><input class="input" data-f="i_max" value="${escapeHtml(p.i_max)}" placeholder="53-0-0"></div>
+      </div>
+      <div class="field"><label>Pha đấu nối</label>
+        <div class="choice-row">
+          ${choiceBtn('pha_dau_noi','A',p.pha_dau_noi)}
+          ${choiceBtn('pha_dau_noi','B',p.pha_dau_noi)}
+          ${choiceBtn('pha_dau_noi','C',p.pha_dau_noi)}
+          ${choiceBtn('pha_dau_noi','3 pha',p.pha_dau_noi)}
+        </div></div>
+    </div>
+
+    <div class="section-title"><span class="num">II.3</span>Vị trí lắp đặt điện kế &amp; sơ đồ</div>
+    <div class="card">
+      <div class="field"><label>Vị trí lắp đặt</label>
+        <div class="choice-row">
+          <div class="choice ${p.vi_tri_dien_ke==='nha'?'active':''}" data-choice="vi_tri_dien_ke:nha">Trong phạm vi nhà KH</div>
+          <div class="choice ${p.vi_tri_dien_ke==='cot'?'active':''}" data-choice="vi_tri_dien_ke:cot">Điện kế gắn ngoài cột</div>
+        </div></div>
+      <div class="grid2">
+        <div class="field"><label>Tọa độ GPS</label>
+          <div style="display:flex;gap:6px;">
+            <input class="input" data-f="gps_toa_do" id="gps-input" value="${escapeHtml(p.gps_toa_do)}" placeholder="9.952292,105.141733">
+            <button class="btn btn-ghost btn-sm" id="btn-gps" type="button">${ICO.pin}</button>
+          </div></div>
+        <div class="field"><label>Khoảng cách đến trụ điện (m)</label>
+          <input class="input" data-f="khoang_cach_tru" inputmode="decimal" value="${escapeHtml(p.khoang_cach_tru)}"></div>
+      </div>
+      <div class="hint" style="margin-bottom:8px;">Sơ đồ vị trí — vẽ đường, nhà, trạm, trụ, dây và ghi chú ngay trên hình:</div>
+      <div class="sketch-toolbar" id="sketch-toolbar">
+        ${sketchToolBtn('pen', ICO.pen, 'Bút', 'Bút vẽ')}
+        ${sketchToolBtn('road', ICO.road, 'Đường', 'Vẽ đường/lộ')}
+        ${sketchToolBtn('wire', ICO.wire, 'Dây điện', 'Vẽ dây điện')}
+        ${sketchToolBtn('tram', ICO.stampTram, 'Trạm', 'Đặt trạm')}
+        ${sketchToolBtn('tru', ICO.stampTru, 'Trụ', 'Đặt trụ điện')}
+        ${sketchToolBtn('dienke', ICO.stampMeter, 'Điện kế', 'Đặt điện kế')}
+        ${sketchToolBtn('nha', ICO.stampHouse, 'Nhà', 'Đặt nhà')}
+        ${sketchToolBtn('text', ICO.tag, 'Ghi chú', 'Thêm ghi chú')}
+        ${sketchToolBtn('eraser', ICO.eraser, 'Tẩy', 'Xóa 1 nét/biểu tượng')}
+      </div>
+      <div class="sketch-wrap">
+        <canvas id="sketch-canvas"></canvas>
+      </div>
+      <div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap;">
+        <button class="btn btn-ghost btn-sm" id="btn-sketch-template" type="button">Chèn sơ đồ mẫu (trạm–dây–nhà)</button>
+        <button class="btn btn-ghost btn-sm" id="btn-sketch-undo" type="button">Hoàn tác</button>
+        <button class="btn btn-ghost btn-sm" id="btn-sketch-clear" type="button">Xóa hết</button>
+      </div>
+      <div class="hint" style="margin-top:8px;">Chạm để đặt biểu tượng hoặc thêm ghi chú · Kéo để vẽ đường/dây · Có thể kéo biểu tượng đã đặt để di chuyển · Sau khi vẽ xong một đoạn đường/dây, ứng dụng sẽ hỏi số mét để ghi chú luôn lên hình.</div>
+      <div class="field" style="margin-top:12px;"><label>Ghi chú thêm (dạng chữ)</label>
+        <textarea class="textarea" data-f="ghi_chu_so_do" placeholder="VD: Kiểm tra dây nhánh và trụ điện kéo phía sau điện kế phải đảm bảo an toàn.">${escapeHtml(p.ghi_chu_so_do)}</textarea></div>
+    </div>
+
+    <div class="section-title"><span class="num">II.5</span>Nhận xét khảo sát</div>
+    <div class="card">
+      <div class="field"><label>a. Phụ tải trạm</label>
+        <div class="choice-row">
+          <div class="choice ${p.phu_tai==='du'?'active':''}" data-choice="phu_tai:du">Đủ khả năng cấp điện</div>
+          <div class="choice ${p.phu_tai==='khong_du'?'active':''}" data-choice="phu_tai:khong_du">Không đủ khả năng</div>
+        </div></div>
+      <div class="grid2">
+        <div class="field"><label>b. K/c trạm đến điểm cấp điện (m)</label>
+          <input class="input" data-f="khoang_cach_tram" inputmode="decimal" value="${escapeHtml(p.khoang_cach_tram)}"></div>
+        <div class="field"><label>Đảm bảo quy định?</label>
+          <div class="choice-row">
+            <div class="choice ${p.khoang_cach_dat==='co'?'active':''}" data-choice="khoang_cach_dat:co" style="flex:1;">Có</div>
+            <div class="choice ${p.khoang_cach_dat==='khong'?'active':''}" data-choice="khoang_cach_dat:khong" style="flex:1;">Không</div>
+          </div></div>
+      </div>
+      <div class="grid2">
+        <div class="field"><label>c. Chất lượng điện áp (V)</label>
+          <input class="input" data-f="chat_luong_ap" inputmode="decimal" value="${escapeHtml(p.chat_luong_ap)}"></div>
+        <div class="field"><label>Đảm bảo quy định?</label>
+          <div class="choice-row">
+            <div class="choice ${p.dien_ap_dat==='co'?'active':''}" data-choice="dien_ap_dat:co" style="flex:1;">Có</div>
+            <div class="choice ${p.dien_ap_dat==='khong'?'active':''}" data-choice="dien_ap_dat:khong" style="flex:1;">Không</div>
+          </div></div>
+      </div>
+      <div class="field"><label>d. Giấy ưng thuận câu chuyển bổ sung</label>
+        <div class="choice-row">
+          <div class="choice ${p.giay_ung_thuan==='co'?'active':''}" data-choice="giay_ung_thuan:co">Có</div>
+          <div class="choice ${p.giay_ung_thuan==='khong'?'active':''}" data-choice="giay_ung_thuan:khong">Không</div>
+        </div></div>
+      <div class="grid2">
+        <div class="field"><label>e. Độ cao đến điểm thấp nhất dây (m)</label>
+          <input class="input" data-f="do_cao_day" inputmode="decimal" value="${escapeHtml(p.do_cao_day)}"></div>
+        <div class="field"><label>Cần trụ đỡ?</label>
+          <div class="choice-row">
+            <div class="choice ${p.can_tru_do==='co'?'active':''}" data-choice="can_tru_do:co" style="flex:1;">Có</div>
+            <div class="choice ${p.can_tru_do==='khong'?'active':''}" data-choice="can_tru_do:khong" style="flex:1;">Không</div>
+          </div></div>
+      </div>
+      ${p.can_tru_do==='co' ? `<div class="field"><label>Số mét trụ đỡ</label><input class="input" data-f="tru_do_met" value="${escapeHtml(p.tru_do_met)}"></div>` : ``}
+    </div>
+
+    <div class="section-title"><span class="num">III</span>Bảng dự trù vật tư</div>
+    <div class="card">
+      <div id="mat-rows">${renderMatRows(p)}</div>
+      <button class="btn btn-ghost btn-sm" id="btn-add-mat" type="button" style="margin-top:2px;">+ Thêm dòng</button>
+      <div class="hint" style="margin:12px 0 6px;">Thêm nhanh vật tư thường dùng:</div>
+      <div>${COMMON_MATERIALS.map(m=>{
+        const [name,unit] = m.split('|');
+        return `<button class="chip" data-quickmat="${escapeHtml(m)}" type="button">${escapeHtml(name)}</button>`;
+      }).join('')}</div>
+    </div>
+
+    <div class="section-title"><span class="num">IV</span>Kết luận</div>
+    <div class="card">
+      <div class="choice-row">
+        <div class="choice ${p.ket_luan==='dong_y'?'active':''}" data-choice="ket_luan:dong_y">Đồng ý lắp đặt</div>
+        <div class="choice ${p.ket_luan==='khong_dong_y'?'active':''}" data-choice="ket_luan:khong_dong_y">Không đồng ý</div>
+      </div>
+      ${p.ket_luan==='khong_dong_y' ? `<div class="field" style="margin-top:10px;"><label>Lý do</label><textarea class="textarea" data-f="ly_do_khong_dong_y">${escapeHtml(p.ly_do_khong_dong_y)}</textarea></div>` : ``}
+    </div>
+
+    <div style="display:flex;gap:10px;margin-top:10px;">
+      <button class="btn btn-ghost btn-block" id="btn-save-draft">Lưu nháp</button>
+      <button class="btn btn-amber btn-block" id="btn-submit-plan">Gửi duyệt</button>
+    </div>
+  </div>`;
+}
+
+function sketchToolBtn(tool, icon, label, title){
+  return `<button class="stool ${sketchTool===tool?'active':''}" data-tool="${tool}" title="${title}">${icon} <span>${label}</span></button>`;
+}
+function choiceBtn(field, val, current){
+  return `<div class="choice ${current===val?'active amber':''}" data-choice="${field}:${val}">${val}</div>`;
+}
+
+function renderMatRows(p){
+  if(p.vat_tu.length===0) return `<div class="hint" style="margin-bottom:8px;">Chưa có vật tư nào. Thêm dòng hoặc chọn nhanh bên dưới.</div>`;
+  return p.vat_tu.map((r,i)=>`
+    <div class="mat-row">
+      <input class="input" data-mat="${i}:ten" value="${escapeHtml(r.ten)}" placeholder="Tên vật tư">
+      <input class="input" data-mat="${i}:dvt" value="${escapeHtml(r.dvt)}" placeholder="ĐVT">
+      <input class="input" data-mat="${i}:sl" value="${escapeHtml(r.sl)}" placeholder="SL" inputmode="decimal">
+      <button class="mat-del" data-matdel="${i}" type="button">${ICO.x}</button>
+    </div>`).join('');
+}
+
+/* ======================= SKETCH DRAWING ENGINE =======================
+   A lightweight freehand + stamp drawing tool for the "field sketch"
+   section. Model per plan: plan.sketch = {paths:[], stamps:[], texts:[]}
+   - paths: {points:[{x,y},...], color, width, dash:bool}
+   - stamps: {id, type: 'tram'|'tru'|'nha'|'dienke', x, y}
+   - texts:  {id, x, y, text}
+   A PNG snapshot is kept in plan.sketch_image so the read-only Detail
+   view can just show an <img> without re-mounting a live canvas. */
+let sketchTool = 'pen';
+let sketchCtx = null, sketchCanvasEl = null, sketchDPR = 1;
+let sketchDrawingPath = null;
+let sketchDragging = null;
+
+function ensureSketchModel(p){
+  if(!p.sketch) p.sketch = {paths:[], stamps:[], texts:[]};
+  if(!Array.isArray(p.sketch.paths)) p.sketch.paths = [];
+  if(!Array.isArray(p.sketch.stamps)) p.sketch.stamps = [];
+  if(!Array.isArray(p.sketch.texts)) p.sketch.texts = [];
+}
+
+function initSketchCanvas(){
+  const canvas = document.getElementById('sketch-canvas');
+  if(!canvas) return;
+  const p = state.currentPlan;
+  ensureSketchModel(p);
+  sketchCanvasEl = canvas;
+  const rect = canvas.getBoundingClientRect();
+  sketchDPR = window.devicePixelRatio || 1;
+  canvas.width = Math.max(1, Math.round(rect.width * sketchDPR));
+  canvas.height = Math.max(1, Math.round(rect.height * sketchDPR));
+  sketchCtx = canvas.getContext('2d');
+  sketchCtx.setTransform(sketchDPR,0,0,sketchDPR,0,0);
+  sketchRedraw();
+  sketchSnapshot();
+
+  document.querySelectorAll('.stool').forEach(btn=>{
+    btn.onclick = ()=>{
+      sketchTool = btn.dataset.tool;
+      document.querySelectorAll('.stool').forEach(b=>b.classList.remove('active'));
+      btn.classList.add('active');
+    };
   });
 
-  async function handleSave(isSubmit) {
-    try {
-      const formData = {
-        code: document.getElementById('code').value,
-        customer_name: document.getElementById('customer_name').value,
-        customer_phone: document.getElementById('customer_phone').value,
-        address: document.getElementById('address').value,
-        can_tru_do: document.getElementById('can_tru_do').value
-      };
+  canvas.onpointerdown = sketchPointerDown;
+  canvas.onpointermove = sketchPointerMove;
+  canvas.onpointerup = sketchPointerUp;
+  canvas.onpointerleave = sketchPointerUp;
 
-      if (!formData.customer_name) {
-        alert('Vui lòng nhập tên khách hàng!');
-        return;
-      }
-
-      const res = await SurveyDB.savePlan(formData, isSubmit);
-      document.getElementById('code').value = res.code;
-      alert(isSubmit ? 'Đã gửi duyệt phương án!' : 'Đã lưu nháp thành công!');
-      loadPlansTable();
-    } catch (err) {
-      alert('Lỗi lưu phương án: ' + err.message);
+  const undoBtn = document.getElementById('btn-sketch-undo');
+  if(undoBtn) undoBtn.onclick = ()=>{
+    const s = state.currentPlan.sketch;
+    const last = [
+      {arr:s.paths, t: s.paths.length? s.paths[s.paths.length-1]._t:0},
+      {arr:s.stamps, t: s.stamps.length? s.stamps[s.stamps.length-1]._t:0},
+      {arr:s.texts, t: s.texts.length? s.texts[s.texts.length-1]._t:0}
+    ].sort((a,b)=>b.t-a.t)[0];
+    if(last && last.arr.length) last.arr.pop();
+    sketchRedraw(); sketchSnapshot();
+  };
+  const clearBtn = document.getElementById('btn-sketch-clear');
+  if(clearBtn) clearBtn.onclick = ()=>{
+    openConfirm('Xóa toàn bộ sơ đồ đã vẽ?', ()=>{
+      state.currentPlan.sketch = {paths:[], stamps:[], texts:[]};
+    });
+  };
+  const tplBtn = document.getElementById('btn-sketch-template');
+  if(tplBtn) tplBtn.onclick = ()=>{
+    const s = state.currentPlan.sketch;
+    if(s.paths.length||s.stamps.length||s.texts.length){
+      openConfirm('Chèn sơ đồ mẫu sẽ thay thế hình đang vẽ. Tiếp tục?', ()=> insertSketchTemplate());
+    } else {
+      insertSketchTemplate();
     }
+  };
+}
+
+function sketchPoint(e){
+  const rect = sketchCanvasEl.getBoundingClientRect();
+  return {x: e.clientX-rect.left, y: e.clientY-rect.top};
+}
+function sketchStampAt(pt){
+  const s = state.currentPlan.sketch;
+  for(let i=s.stamps.length-1;i>=0;i--){
+    const st = s.stamps[i];
+    if(Math.hypot(st.x-pt.x, st.y-pt.y) < 22) return st;
   }
+  return null;
+}
+function sketchTextAt(pt){
+  const s = state.currentPlan.sketch;
+  for(let i=s.texts.length-1;i>=0;i--){
+    const tx = s.texts[i];
+    if(Math.abs(tx.x-pt.x)<40 && Math.abs(tx.y-pt.y)<14) return tx;
+  }
+  return null;
+}
+function sketchNearestElement(pt){
+  const s = state.currentPlan.sketch;
+  let best=null, bestD=26;
+  s.stamps.forEach(st=>{ const d=Math.hypot(st.x-pt.x,st.y-pt.y); if(d<bestD){bestD=d;best={arr:s.stamps,item:st};} });
+  s.texts.forEach(tx=>{ const d=Math.hypot(tx.x-pt.x,tx.y-pt.y); if(d<bestD){bestD=d;best={arr:s.texts,item:tx};} });
+  s.paths.forEach(pa=>{
+    for(const pt2 of pa.points){ const d=Math.hypot(pt2.x-pt.x,pt2.y-pt.y); if(d<bestD){bestD=d;best={arr:s.paths,item:pa};} }
+  });
+  return best;
+}
+function sketchPointerDown(e){
+  e.preventDefault();
+  const pt = sketchPoint(e);
+  const p = state.currentPlan;
+  if(sketchTool==='eraser'){
+    const hit = sketchNearestElement(pt);
+    if(hit){ const idx = hit.arr.indexOf(hit.item); if(idx>-1) hit.arr.splice(idx,1); sketchRedraw(); sketchSnapshot(); }
+    return;
+  }
+  const hitStamp = sketchStampAt(pt);
+  if(hitStamp){ sketchDragging = {kind:'stamp', ref:hitStamp}; return; }
+  const hitText = sketchTextAt(pt);
+  if(hitText){ sketchDragging = {kind:'text', ref:hitText}; return; }
 
-  async function loadPlansTable() {
-    const plans = await SurveyDB.fetchPlans();
-    const tbody = document.getElementById('plans-table-body');
-    tbody.innerHTML = '';
-
-    if (plans.length === 0) {
-      tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;">Chưa có dữ liệu</td></tr>';
-      return;
-    }
-
-    plans.forEach(plan => {
-      const tr = document.createElement('tr');
-      tr.innerHTML = `
-        <td><b>${plan.code}</b></td>
-        <td>${plan.customer_name}</td>
-        <td>${plan.address || ''}</td>
-        <td><span style="font-weight:bold; color: ${getStatusColor(plan.status)}">${plan.status.toUpperCase()}</span></td>
-        <td>
-          <button class="btn btn-secondary" style="padding:2px 6px;" onclick="viewPlan('${plan.id}')">Xem</button>
-          <button class="btn btn-success" style="padding:2px 6px;" onclick="approvePlan('${plan.id}')">Duyệt</button>
-        </td>
-      `;
-      tbody.appendChild(tr);
+  if(sketchTool==='pen'){
+    sketchDrawingPath = {points:[pt], color:'#122A4A', width:2.5, dash:false, kind:'pen', _t:Date.now()};
+    return;
+  }
+  if(sketchTool==='road'){
+    sketchDrawingPath = {points:[pt], color:'#8C9AA3', width:7, dash:false, kind:'road', _t:Date.now()};
+    return;
+  }
+  if(sketchTool==='wire'){
+    sketchDrawingPath = {points:[pt], color:'#F5A623', width:3, dash:true, kind:'wire', _t:Date.now()};
+    return;
+  }
+  if(['tram','tru','nha','dienke'].includes(sketchTool)){
+    p.sketch.stamps.push({id:uid(), type:sketchTool, x:pt.x, y:pt.y, _t:Date.now()});
+    sketchRedraw(); sketchSnapshot();
+    return;
+  }
+  if(sketchTool==='text'){
+    openPrompt('Nội dung ghi chú (VD: 140m, kiểm tra dây nhánh...):', '', (label)=>{
+      if(label && label.trim()){
+        p.sketch.texts.push({id:uid(), x:pt.x, y:pt.y, text:label.trim(), _t:Date.now()});
+      }
     });
   }
-
-  function getStatusColor(status) {
-    switch(status) {
-      case 'approved': return 'green';
-      case 'rejected': return 'red';
-      case 'pending': return 'orange';
-      default: return 'gray';
+}
+function sketchPointerMove(e){
+  if(sketchDragging){
+    const pt = sketchPoint(e);
+    sketchDragging.ref.x = pt.x; sketchDragging.ref.y = pt.y;
+    sketchRedraw();
+    return;
+  }
+  if(sketchDrawingPath){
+    const pt = sketchPoint(e);
+    if(sketchDrawingPath.kind==='pen') sketchDrawingPath.points.push(pt);
+    else sketchDrawingPath.points = [sketchDrawingPath.points[0], pt]; // straight line for road/wire
+    sketchRedraw(true);
+  }
+}
+function sketchPointerUp(e){
+  if(sketchDragging){ sketchDragging=null; sketchSnapshot(); return; }
+  if(sketchDrawingPath){
+    const path = sketchDrawingPath;
+    sketchDrawingPath = null;
+    if(path.points.length>1){
+      state.currentPlan.sketch.paths.push(path);
+      sketchRedraw(); sketchSnapshot();
+      if(path.kind==='road' || path.kind==='wire'){
+        const a=path.points[0], b=path.points[path.points.length-1];
+        const mx=(a.x+b.x)/2, my=(a.y+b.y)/2-10;
+        openPrompt('Số mét / ghi chú cho đoạn này (để trống nếu bỏ qua):', '', (label)=>{
+          if(label && label.trim()){
+            state.currentPlan.sketch.texts.push({id:uid(), x:mx, y:my, text:label.trim(), _t:Date.now()});
+          }
+        });
+      }
+      return;
     }
+    sketchRedraw(); sketchSnapshot();
   }
+}
 
-  async function approvePlan(id) {
-    if (confirm('Xác nhận duyệt phương án này?')) {
-      await SurveyDB.updateStatus(id, 'approved');
-      loadPlansTable();
+function sketchDrawIcon(ctx, type, x, y){
+  ctx.save();
+  ctx.translate(x,y);
+  ctx.font='600 9px Inter, sans-serif';
+  ctx.textAlign='center';
+  if(type==='tram'){
+    ctx.beginPath(); ctx.arc(0,0,14,0,Math.PI*2); ctx.fillStyle='#122A4A'; ctx.fill();
+    ctx.fillStyle='#F5A623'; ctx.font='11px sans-serif'; ctx.fillText('⚡',0,4);
+    ctx.fillStyle='#122A4A'; ctx.font='600 9px Inter, sans-serif'; ctx.fillText('Trạm',0,26);
+  } else if(type==='tru'){
+    ctx.strokeStyle='#5B6B7A'; ctx.lineWidth=3; ctx.lineCap='round';
+    ctx.beginPath(); ctx.moveTo(0,-14); ctx.lineTo(0,14); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(-8,-9); ctx.lineTo(8,-9); ctx.moveTo(-7,-2); ctx.lineTo(7,-2); ctx.stroke();
+    ctx.fillStyle='#122A4A'; ctx.fillText('Trụ',0,26);
+  } else if(type==='dienke'){
+    ctx.fillStyle='#F5A623'; roundRectPath(ctx,-12,-12,24,24,5); ctx.fill();
+    ctx.strokeStyle='#8A5A08'; ctx.lineWidth=1.5; ctx.beginPath(); ctx.arc(0,0,7,0,Math.PI*2); ctx.stroke();
+    ctx.fillStyle='#122A4A'; ctx.fillText('Điện kế',0,26);
+  } else if(type==='nha'){
+    ctx.fillStyle='#fff'; ctx.strokeStyle='#122A4A'; ctx.lineWidth=2;
+    roundRectPath(ctx,-14,-11,28,22,4); ctx.fill(); ctx.stroke();
+    ctx.font='13px sans-serif'; ctx.fillText('🏠',0,5);
+    ctx.fillStyle='#122A4A'; ctx.font='600 9px Inter, sans-serif'; ctx.fillText('Nhà KH',0,28);
+  }
+  ctx.restore();
+}
+function roundRectPath(ctx,x,y,w,h,r){
+  ctx.beginPath();
+  ctx.moveTo(x+r,y); ctx.arcTo(x+w,y,x+w,y+h,r); ctx.arcTo(x+w,y+h,x,y+h,r);
+  ctx.arcTo(x,y+h,x,y,r); ctx.arcTo(x,y,x+w,y,r); ctx.closePath();
+}
+function sketchDrawText(ctx, tx){
+  ctx.font='700 11px "IBM Plex Mono", monospace';
+  const w = ctx.measureText(tx.text).width;
+  ctx.fillStyle='rgba(255,255,255,.92)';
+  roundRectPath(ctx, tx.x-w/2-6, tx.y-13, w+12, 18, 5); ctx.fill();
+  ctx.strokeStyle='#DBE1E2'; ctx.lineWidth=1; roundRectPath(ctx, tx.x-w/2-6, tx.y-13, w+12, 18, 5); ctx.stroke();
+  ctx.fillStyle='#8A5A08'; ctx.textAlign='center'; ctx.fillText(tx.text, tx.x, tx.y);
+}
+function sketchRedraw(liveOnly){
+  if(!sketchCtx) return;
+  const canvas = sketchCanvasEl;
+  const w = canvas.width / sketchDPR, h = canvas.height / sketchDPR;
+  const ctx = sketchCtx;
+  ctx.clearRect(0,0,w,h);
+  // subtle background grid, like graph/survey paper
+  ctx.strokeStyle = '#E9EDEC'; ctx.lineWidth = 1;
+  for(let gx=0; gx<w; gx+=24){ ctx.beginPath(); ctx.moveTo(gx,0); ctx.lineTo(gx,h); ctx.stroke(); }
+  for(let gy=0; gy<h; gy+=24){ ctx.beginPath(); ctx.moveTo(0,gy); ctx.lineTo(w,gy); ctx.stroke(); }
+
+  const s = state.currentPlan.sketch;
+  const allPaths = liveOnly && sketchDrawingPath ? [...s.paths, sketchDrawingPath] : s.paths;
+  allPaths.forEach(path=>{
+    if(path.points.length<2) return;
+    ctx.beginPath();
+    ctx.moveTo(path.points[0].x, path.points[0].y);
+    for(let i=1;i<path.points.length;i++) ctx.lineTo(path.points[i].x, path.points[i].y);
+    ctx.strokeStyle = path.color; ctx.lineWidth = path.width;
+    ctx.lineCap='round'; ctx.lineJoin='round';
+    ctx.setLineDash(path.dash ? [8,6] : []);
+    ctx.stroke();
+    ctx.setLineDash([]);
+  });
+  s.stamps.forEach(st=> sketchDrawIcon(ctx, st.type, st.x, st.y));
+  s.texts.forEach(tx=> sketchDrawText(ctx, tx));
+}
+function sketchSnapshot(){
+  if(!sketchCanvasEl) return;
+  try{ state.currentPlan.sketch_image = sketchCanvasEl.toDataURL('image/png'); }catch(e){}
+}
+function insertSketchTemplate(){
+  const p = state.currentPlan;
+  const canvas = sketchCanvasEl;
+  const w = canvas.width/sketchDPR, h = canvas.height/sketchDPR;
+  const meterAtPole = p.vi_tri_dien_ke !== 'nha';
+  const yMid = h*0.55;
+  const xTram = w*0.14, xMeter = meterAtPole ? w*0.48 : null, xHouse = w*0.86;
+  const stamps = [{id:uid(),type:'tram',x:xTram,y:yMid,_t:Date.now()}];
+  const paths = [];
+  const texts = [{id:uid(), x:w/2, y:h*0.12, text:`${p.tram_dau_noi||'Trạm'} · Pha ${p.pha_dau_noi||''} · ${p.cong_suat_dat||'?'} KVA`, _t:Date.now()}];
+  if(meterAtPole){
+    paths.push({points:[{x:xTram+16,y:yMid},{x:xMeter-14,y:yMid}], color:'#F5A623', width:3, dash:true, kind:'wire', _t:Date.now()});
+    stamps.push({id:uid(),type:'dienke',x:xMeter,y:yMid,_t:Date.now()});
+    paths.push({points:[{x:xMeter+14,y:yMid},{x:xHouse-16,y:yMid}], color:'#B9C3C6', width:2.5, dash:false, kind:'wire', _t:Date.now()});
+    texts.push({id:uid(), x:(xTram+xMeter)/2, y:yMid-14, text:(p.khoang_cach_tru||'?')+' m', _t:Date.now()});
+  } else {
+    paths.push({points:[{x:xTram+16,y:yMid},{x:xHouse-16,y:yMid}], color:'#F5A623', width:3, dash:true, kind:'wire', _t:Date.now()});
+    texts.push({id:uid(), x:(xTram+xHouse)/2, y:yMid-14, text:(p.khoang_cach_tru||'?')+' m', _t:Date.now()});
+  }
+  stamps.push({id:uid(),type:'nha',x:xHouse,y:yMid,_t:Date.now()});
+  p.sketch = {paths, stamps, texts};
+  sketchRedraw(); sketchSnapshot();
+}
+
+function bindFormEvents(){
+  initSketchCanvas();
+  document.querySelectorAll('[data-f]').forEach(el=>{
+    el.oninput = e=>{ state.currentPlan[el.dataset.f] = e.target.value; if(el.tagName==='SELECT') render(); };
+    el.onchange = e=>{ if(el.tagName==='SELECT'){ state.currentPlan[el.dataset.f] = e.target.value; render(); } };
+  });
+  document.querySelectorAll('[data-choice]').forEach(el=>{
+    el.onclick = ()=>{
+      const [field,val] = el.dataset.choice.split(':');
+      state.currentPlan[field] = val;
+      render();
+    };
+  });
+  document.querySelectorAll('[data-mat]').forEach(el=>{
+    el.oninput = e=>{
+      const [idx,key] = el.dataset.mat.split(':');
+      const map = {ten:'ten', dvt:'dvt', sl:'sl'};
+      state.currentPlan.vat_tu[idx][map[key]] = e.target.value;
+    };
+  });
+  document.querySelectorAll('[data-matdel]').forEach(el=>{
+    el.onclick = ()=>{ state.currentPlan.vat_tu.splice(+el.dataset.matdel,1); render(); };
+  });
+  document.querySelectorAll('[data-quickmat]').forEach(el=>{
+    el.onclick = ()=>{
+      const [ten,dvt] = el.dataset.quickmat.split('|');
+      state.currentPlan.vat_tu.push({ten,dvt,sl:'1'});
+      render();
+    };
+  });
+  const addMatBtn = document.getElementById('btn-add-mat');
+  if(addMatBtn) addMatBtn.onclick = ()=>{ state.currentPlan.vat_tu.push({ten:'',dvt:'',sl:''}); render(); };
+
+  const gpsBtn = document.getElementById('btn-gps');
+  if(gpsBtn) gpsBtn.onclick = ()=>{
+    if(!navigator.geolocation){ showToast('Thiết bị không hỗ trợ định vị GPS'); return; }
+    gpsBtn.disabled = true;
+    navigator.geolocation.getCurrentPosition(pos=>{
+      const lat = pos.coords.latitude.toFixed(6);
+      const lng = pos.coords.longitude.toFixed(6);
+      state.currentPlan.gps_toa_do = `${lat},${lng}`;
+      render();
+    }, err=>{ showToast('Không lấy được vị trí — vui lòng nhập tay'); gpsBtn.disabled=false; }, {enableHighAccuracy:true, timeout:8000});
+  };
+
+  const saveDraft = document.getElementById('btn-save-draft');
+  if(saveDraft) saveDraft.onclick = async ()=>{
+    if(!validatePlan()) return;
+    state.currentPlan.status = state.currentPlan.status==='draft' ? 'draft' : state.currentPlan.status;
+    state.currentPlan.updated_at = nowISO();
+    ensureSignatures(state.currentPlan);
+    applyOwnerSignature('nguoi_lap');
+    await savePlanFull(state.currentPlan);
+    showToast('Đã lưu nháp');
+    state.route = 'staffList';
+    render();
+  };
+  const submitBtn = document.getElementById('btn-submit-plan');
+  if(submitBtn) submitBtn.onclick = async ()=>{
+    if(!validatePlan()) return;
+    state.currentPlan.status = 'pending';
+    state.currentPlan.updated_at = nowISO();
+    state.currentPlan.leader_note = '';
+    ensureSignatures(state.currentPlan);
+    applyOwnerSignature('nguoi_lap');
+    await savePlanFull(state.currentPlan);
+    showToast('Đã gửi phương án chờ duyệt');
+    state.route = 'staffList';
+    render();
+  };
+}
+function validatePlan(){
+  const p = state.currentPlan;
+  if(!p.ten_khach_hang || !p.ten_khach_hang.trim()){ showToast('Vui lòng nhập tên khách hàng'); return false; }
+  return true;
+}
+
+/* ======================= DETAIL VIEW ======================= */
+function viewDetail(){
+  const p = state.currentPlan;
+  const isOwner = p.created_by === state.profile.name;
+  const isLeader = state.profile.role === 'leader';
+  const canEdit = isOwner && (p.status==='draft' || p.status==='rejected');
+
+  return `
+  <div class="screen">
+    ${renderLetterhead()}
+    <div class="back-row">
+      <button class="back-btn" data-nav="${isLeader?'leaderList':'staffList'}">${ICO.back}</button>
+      <div class="screen-title" style="flex:1;">${escapeHtml(p.ten_khach_hang||'Chi tiết phương án')}</div>
+      <span class="badge badge-${p.status}">${STATUS_LABEL[p.status]}</span>
+    </div>
+
+    ${p.status==='rejected' && p.leader_note ? `<div class="note-box rejected no-print" style="margin-bottom:14px;"><b>Lý do từ chối:</b> ${escapeHtml(p.leader_note)}</div>` : ``}
+    ${p.status==='approved' ? `<div class="note-box no-print" style="margin-bottom:14px;background:#E4F5F2;border-color:#B9E4DD;color:#0B7268;"><b>Đã duyệt</b> bởi ${escapeHtml(p.approved_by||'')} · ${fmtDate(p.approved_at)}${p.leader_note? ' — '+escapeHtml(p.leader_note):''}</div>` : ``}
+
+    <div class="section-title"><span class="num">I</span>Khách hàng</div>
+    <div class="card detail-block">
+      ${detailRow('Tên khách hàng', p.ten_khach_hang)}
+      ${detailRow('Điện thoại', p.sdt)}
+      ${detailRow('Danh số liền kề', p.danh_so_lien_ke)}
+      ${detailRow('Địa chỉ', p.dia_chi)}
+    </div>
+
+    <div class="section-title"><span class="num">II</span>Thông số kỹ thuật</div>
+    <div class="card detail-block">
+      ${detailRow('Mục đích sử dụng', p.muc_dich)}
+      ${detailRow('Số hộ dùng chung / Loại nhà', p.so_ho_dung_chung+' hộ · '+p.loai_nha)}
+      ${detailRow('Trạm đấu nối', p.tram_dau_noi)}
+      ${detailRow('Công suất / I_ĐM / I_MAX', `${p.cong_suat_dat} KVA · ${p.i_dm} A · ${p.i_max}`)}
+      ${detailRow('Pha đấu nối', p.pha_dau_noi)}
+      ${detailRow('Vị trí điện kế', p.vi_tri_dien_ke==='nha' ? 'Trong phạm vi nhà KH' : 'Gắn ngoài cột')}
+      ${detailRow('Tọa độ GPS', p.gps_toa_do)}
+      ${detailRow('K/c đến trụ điện', p.khoang_cach_tru+' m')}
+    </div>
+
+    <div class="detail-block">
+      ${p.sketch_image ? `<div class="sketch-wrap"><img src="${p.sketch_image}" style="width:100%;display:block;" alt="Sơ đồ vị trí"></div>` :
+        `<div class="sketch-wrap" style="display:flex;align-items:center;justify-content:center;height:140px;color:var(--muted);font-size:12.5px;">Chưa có sơ đồ vẽ tay</div>`}
+    </div>
+    ${p.ghi_chu_so_do ? `<div class="card detail-block"><div class="detail-row"><span class="dk">Ghi chú thêm</span></div><div style="font-size:13.5px;">${escapeHtml(p.ghi_chu_so_do)}</div></div>` : ``}
+
+    <div class="section-title"><span class="num">III</span>Nhận xét khảo sát</div>
+    <div class="card detail-block">
+      ${detailRow('Phụ tải trạm', p.phu_tai==='du'?'Đủ khả năng':'Không đủ khả năng')}
+      ${detailRow('K/c trạm đến điểm cấp điện', p.khoang_cach_tram+' m — '+(p.khoang_cach_dat==='co'?'Đảm bảo':'Không đảm bảo'))}
+      ${detailRow('Chất lượng điện áp', p.chat_luong_ap+' V — '+(p.dien_ap_dat==='co'?'Đảm bảo':'Không đảm bảo'))}
+      ${detailRow('Giấy ưng thuận bổ sung', p.giay_ung_thuan==='co'?'Có':'Không')}
+      ${detailRow('Độ cao thấp nhất dây', p.do_cao_day+' m')}
+      ${detailRow('Cần trụ đỡ', p.can_tru_do==='co' ? ('Có, '+p.tru_do_met+' m') : 'Không')}
+    </div>
+
+    <div class="section-title"><span class="num">IV</span>Vật tư dự trù (${p.vat_tu.length})</div>
+    <div class="card detail-block">
+      ${p.vat_tu.length===0 ? '<div class="hint">Không có vật tư.</div>' :
+        p.vat_tu.map(r=>`<div class="detail-row"><span class="dk">${escapeHtml(r.ten||'—')}</span><span class="dv">${escapeHtml(r.sl||'')} ${escapeHtml(r.dvt||'')}</span></div>`).join('')}
+    </div>
+
+    <div class="section-title"><span class="num">V</span>Kết luận</div>
+    <div class="card detail-block">
+      ${detailRow('Kết luận', p.ket_luan==='dong_y' ? 'Đồng ý lắp đặt' : 'Không đồng ý')}
+      ${p.ket_luan!=='dong_y' ? detailRow('Lý do', p.ly_do_khong_dong_y) : ``}
+      ${detailRow('Người lập', p.created_by)}
+      ${detailRow('Ngày lập', p.ngay_lap)}
+    </div>
+
+    ${renderSignatureSection(p)}
+
+    <div class="no-print" style="display:flex;gap:10px;flex-wrap:wrap;margin-top:6px;">
+      ${canEdit ? `<button class="btn btn-primary" id="btn-edit-plan" style="flex:1;">Chỉnh sửa</button>` : ``}
+      <button class="btn btn-ghost" id="btn-print-plan" style="flex:1;">${ICO.print} In / Xuất</button>
+      <button class="btn btn-ghost" id="btn-copy-plan" style="flex:1;">${ICO.copy} Sao chép nội dung</button>
+    </div>
+
+    ${isLeader && p.status==='pending' ? `
+    <div class="section-title"><span class="num">✓</span>Xét duyệt</div>
+    <div class="card no-print">
+      <div class="field"><label>Ghi chú (không bắt buộc)</label>
+        <textarea class="textarea" id="leader-note-input" placeholder="Ghi chú khi duyệt hoặc lý do từ chối..."></textarea></div>
+      <div style="display:flex;gap:10px;">
+        <button class="btn btn-teal btn-block" id="btn-approve">${ICO.check} Duyệt</button>
+        <button class="btn btn-red btn-block" id="btn-reject">${ICO.x} Từ chối</button>
+      </div>
+    </div>` : ``}
+  </div>`;
+}
+function renderLetterhead(){
+  return `
+  <div class="letterhead">
+    <div class="letterhead-row">
+      <div class="lh-col">
+        <div class="lh-strong">${escapeHtml(ORG_NAME_1)}</div>
+        <div class="lh-strong">${escapeHtml(ORG_NAME_2)}</div>
+      </div>
+      <div class="lh-col">
+        <div class="lh-strong">Cộng hòa xã hội chủ nghĩa Việt Nam</div>
+        <div class="lh-underline">Độc lập - Tự do - Hạnh phúc</div>
+      </div>
+    </div>
+    <div class="lh-title">PHƯƠNG ÁN CUNG CẤP ĐIỆN</div>
+  </div>`;
+}
+function vnDateLine(dateStr){
+  const d = dateStr ? new Date(dateStr+'T00:00:00') : new Date();
+  if(isNaN(d.getTime())) return 'ngày ... tháng ... năm ......';
+  return `ngày ${d.getDate()} tháng ${d.getMonth()+1} năm ${d.getFullYear()}`;
+}
+const PAD_OWNER_ROLE = {nguoi_lap:'staff', duyet:'leader', khach_hang:null}; // null = ký lại mỗi lần (khách hàng)
+
+function ensureSignatures(p){
+  if(!p.signatures) p.signatures = {};
+  ['duyet','khach_hang','nguoi_lap'].forEach(k=>{
+    if(!p.signatures[k]) p.signatures[k] = {paths:[], name:''};
+    if(!Array.isArray(p.signatures[k].paths)) p.signatures[k].paths = [];
+  });
+}
+function ensureProfileSignature(){
+  if(state.profile && !state.profile.signature) state.profile.signature = {paths:[], name:''};
+}
+function hasStrokes(sig){ return !!(sig && sig.paths && sig.paths.length>0); }
+
+/* Copy the current account's saved reusable signature onto this plan
+   (used automatically when saving/submitting/approving, so staff and
+   the leader only ever have to draw their signature once). */
+function applyOwnerSignature(key){
+  const ownerRole = PAD_OWNER_ROLE[key];
+  if(!ownerRole || !state.profile || state.profile.role !== ownerRole) return;
+  ensureProfileSignature();
+  if(!hasStrokes(state.profile.signature)) return;
+  ensureSignatures(state.currentPlan);
+  const copy = JSON.parse(JSON.stringify(state.profile.signature));
+  if(!copy.name) copy.name = state.profile.name;
+  state.currentPlan.signatures[key] = copy;
+}
+
+function isPadOwnedByMe(p, key){
+  const ownerRole = PAD_OWNER_ROLE[key];
+  if(!ownerRole || !state.profile || state.profile.role !== ownerRole) return false;
+  if(key==='nguoi_lap') return p.created_by === state.profile.name;
+  return true; // 'duyet': any tổ trưởng account may sign
+}
+function sigDefaultName(p, key, sig){
+  if(sig.name) return sig.name;
+  if(key==='nguoi_lap') return p.created_by || '';
+  if(key==='duyet') return p.approved_by || (isPadOwnedByMe(p,'duyet') ? state.profile.name : '');
+  return '';
+}
+function sigBlockHTML(p, key, label){
+  const sig = p.signatures[key];
+  const ownerRole = PAD_OWNER_ROLE[key];
+  const isReusable = !!ownerRole;
+  const isMine = isPadOwnedByMe(p, key);
+  const readOnly = isReusable && !isMine;
+  const defaultName = sigDefaultName(p, key, sig);
+  const signed = hasStrokes(sig);
+  return `
+  <div class="sig-block">
+    <input class="input sig-name" data-signame="${key}" placeholder="Họ và tên" value="${escapeHtml(defaultName)}" ${readOnly?'disabled':''}>
+    <div class="sig-pad-wrap ${readOnly?'sig-readonly':''}"><canvas id="sig-canvas-${key}" class="sig-canvas" data-editable="${readOnly?0:1}"></canvas></div>
+    <div class="sig-caption">${label}${isReusable?' <span class="sig-reuse-tag">· ký 1 lần, dùng mãi</span>':''}</div>
+    ${readOnly
+      ? (signed ? `` : `<div class="hint" style="margin-top:4px;">Chưa ký (tài khoản ${ownerRole==='staff'?'nhân viên':'tổ trưởng'} tương ứng sẽ tự điền)</div>`)
+      : `<button class="btn btn-ghost btn-sm no-print" data-sigclear="${key}" type="button" style="margin-top:6px;">${isReusable ? 'Ký lại từ đầu' : 'Xóa chữ ký'}</button>`}
+  </div>`;
+}
+function renderSignatureSection(p){
+  ensureSignatures(p);
+  return `
+  <div class="section-title"><span class="num">✎</span>Chữ ký</div>
+  <div class="card">
+    <div class="sig-date">Rạch Giá, ${vnDateLine(p.ngay_lap)}</div>
+    <div class="sig-grid">
+      ${sigBlockHTML(p,'duyet','Duyệt')}
+      ${sigBlockHTML(p,'khach_hang','Khách hàng')}
+      ${sigBlockHTML(p,'nguoi_lap','Người lập phương án')}
+    </div>
+    <div class="hint no-print" style="margin-top:10px;">Chữ ký của Tổ trưởng và Nhân viên khảo sát chỉ cần ký một lần — ứng dụng tự dùng lại cho các phương án sau. Riêng chữ ký Khách hàng ký lại mỗi lần khảo sát.</div>
+  </div>`;
+}
+
+function detailRow(k,v){
+  return `<div class="detail-row"><span class="dk">${k}</span><span class="dv">${escapeHtml(v||'—')}</span></div>`;
+}
+
+function buildPlanText(p){
+  const L = [];
+  L.push('PHƯƠNG ÁN CUNG CẤP ĐIỆN');
+  L.push('— Khách hàng —');
+  L.push(`Tên khách hàng: ${p.ten_khach_hang||'—'}`);
+  L.push(`Điện thoại: ${p.sdt||'—'}`);
+  L.push(`Danh số liền kề: ${p.danh_so_lien_ke||'—'}`);
+  L.push(`Địa chỉ: ${p.dia_chi||'—'}`);
+  L.push('');
+  L.push('— Thông số kỹ thuật —');
+  L.push(`Mục đích sử dụng: ${p.muc_dich} · Số hộ dùng chung: ${p.so_ho_dung_chung} · Loại nhà: ${p.loai_nha}`);
+  L.push(`Trạm đấu nối: ${p.tram_dau_noi||'—'}`);
+  L.push(`Công suất: ${p.cong_suat_dat||'?'} KVA · I_ĐM: ${p.i_dm||'?'} A · I_MAX: ${p.i_max||'?'} · Pha: ${p.pha_dau_noi}`);
+  L.push(`Vị trí điện kế: ${p.vi_tri_dien_ke==='nha' ? 'Trong phạm vi nhà KH' : 'Gắn ngoài cột'}`);
+  L.push(`Tọa độ GPS: ${p.gps_toa_do||'—'} · Khoảng cách đến trụ điện: ${p.khoang_cach_tru||'—'} m`);
+  if(p.ghi_chu_so_do) L.push(`Ghi chú sơ đồ: ${p.ghi_chu_so_do}`);
+  L.push('');
+  L.push('— Nhận xét khảo sát —');
+  L.push(`Phụ tải trạm: ${p.phu_tai==='du'?'Đủ khả năng':'Không đủ khả năng'}`);
+  L.push(`Khoảng cách trạm đến điểm cấp điện: ${p.khoang_cach_tram||'—'} m (${p.khoang_cach_dat==='co'?'đảm bảo':'không đảm bảo'})`);
+  L.push(`Chất lượng điện áp: ${p.chat_luong_ap||'—'} V (${p.dien_ap_dat==='co'?'đảm bảo':'không đảm bảo'})`);
+  L.push(`Giấy ưng thuận câu chuyển bổ sung: ${p.giay_ung_thuan==='co'?'Có':'Không'}`);
+  L.push(`Độ cao đến điểm thấp nhất dây: ${p.do_cao_day||'—'} m · Cần trụ đỡ: ${p.can_tru_do==='co' ? ('Có, '+(p.tru_do_met||'?')+' m') : 'Không'}`);
+  L.push('');
+  L.push('— Vật tư dự trù —');
+  if(p.vat_tu && p.vat_tu.length){
+    p.vat_tu.forEach(r=> L.push(`- ${r.ten||'—'}: ${r.sl||''} ${r.dvt||''}`));
+  } else {
+    L.push('(không có)');
+  }
+  L.push('');
+  L.push(`Kết luận: ${p.ket_luan==='dong_y' ? 'Đồng ý lắp đặt' : ('Không đồng ý — '+(p.ly_do_khong_dong_y||''))}`);
+  L.push(`Người lập: ${p.created_by||'—'} · Ngày lập: ${p.ngay_lap||'—'}`);
+  if(p.status==='approved') L.push(`Đã duyệt bởi: ${p.approved_by||''} lúc ${fmtDate(p.approved_at)}${p.leader_note? (' — '+p.leader_note) : ''}`);
+  if(p.status==='rejected') L.push(`Bị từ chối bởi: ${p.approved_by||''} — Lý do: ${p.leader_note||''}`);
+  return L.join('\n');
+}
+
+function copyPlanText(){
+  const text = buildPlanText(state.currentPlan);
+  const finish = (ok)=> showToast(ok ? 'Đã sao chép nội dung phương án' : 'Không sao chép được ở đây — hãy mở file này ngoài Claude để dùng chức năng này');
+  const ta = document.createElement('textarea');
+  ta.value = text;
+  ta.setAttribute('readonly','');
+  ta.style.position='fixed'; ta.style.top='-9999px'; ta.style.left='-9999px';
+  document.body.appendChild(ta);
+  ta.focus(); ta.select();
+  let ok = false;
+  try{ ok = document.execCommand('copy'); }catch(e){ ok = false; }
+  document.body.removeChild(ta);
+  if(ok){ finish(true); return; }
+  if(navigator.clipboard && navigator.clipboard.writeText){
+    navigator.clipboard.writeText(text).then(()=>finish(true)).catch(()=>finish(false));
+  } else {
+    finish(false);
+  }
+}
+
+function tryPrint(){
+  const inPreview = (window.self !== window.top);
+  if(inPreview){
+    showToast('Không in được trong khung xem trước — hãy mở file này ở một tab trình duyệt riêng để in.');
+  }
+  try{ window.print(); }catch(e){}
+}
+
+/* ======================= SIGNATURE PADS =======================
+   Three independent small freehand canvases: Duyệt / Khách hàng /
+   Người lập phương án. Simpler than the field sketch — just strokes,
+   no stamps or text, each stored under plan.signatures[key].paths. */
+let sigCtx = {}, sigCanvasEl = {};
+function sigPoint(canvas, e){
+  const r = canvas.getBoundingClientRect();
+  return {x: e.clientX-r.left, y: e.clientY-r.top};
+}
+function sigRedraw(key){
+  const ctx = sigCtx[key], canvas = sigCanvasEl[key];
+  if(!ctx || !canvas) return;
+  const dpr = window.devicePixelRatio || 1;
+  const w = canvas.width/dpr, h = canvas.height/dpr;
+  ctx.clearRect(0,0,w,h);
+  ctx.strokeStyle = '#122A4A'; ctx.lineWidth = 2.2; ctx.lineCap='round'; ctx.lineJoin='round';
+  const paths = state.currentPlan.signatures[key].paths;
+  paths.forEach(path=>{
+    if(path.length<2) return;
+    ctx.beginPath(); ctx.moveTo(path[0].x, path[0].y);
+    for(let i=1;i<path.length;i++) ctx.lineTo(path[i].x, path[i].y);
+    ctx.stroke();
+  });
+}
+function initSignaturePads(){
+  const p = state.currentPlan;
+  ensureSignatures(p);
+  ensureProfileSignature();
+  ['duyet','khach_hang','nguoi_lap'].forEach(key=>{
+    const canvas = document.getElementById('sig-canvas-'+key);
+    if(!canvas) return;
+    const editable = canvas.dataset.editable === '1';
+    const isMine = isPadOwnedByMe(p, key);
+
+    // Auto-fill this plan's copy from the saved reusable signature, if any.
+    if(isMine && hasStrokes(state.profile.signature) && !hasStrokes(p.signatures[key])){
+      p.signatures[key] = JSON.parse(JSON.stringify(state.profile.signature));
+      if(!p.signatures[key].name) p.signatures[key].name = state.profile.name;
     }
-  }
 
-  async function viewPlan(id) {
-    const plans = await SurveyDB.fetchPlans();
-    const p = plans.find(item => item.id === id);
-    if (!p) return;
+    const rect = canvas.getBoundingClientRect();
+    const dpr = window.devicePixelRatio || 1;
+    canvas.width = Math.max(1, Math.round(rect.width*dpr));
+    canvas.height = Math.max(1, Math.round(rect.height*dpr));
+    const ctx = canvas.getContext('2d');
+    ctx.setTransform(dpr,0,0,dpr,0,0);
+    sigCtx[key] = ctx; sigCanvasEl[key] = canvas;
+    sigRedraw(key);
 
-    document.getElementById('code').value = p.code;
-    document.getElementById('customer_name').value = p.customer_name;
-    document.getElementById('customer_phone').value = p.customer_phone || '';
-    document.getElementById('address').value = p.address || '';
-  }
+    if(!editable) return; // read-only pad: display only, no drawing wired
+
+    let live = null;
+    canvas.onpointerdown = e=>{ e.preventDefault(); live = [sigPoint(canvas,e)]; };
+    canvas.onpointermove = e=>{
+      if(!live) return;
+      live.push(sigPoint(canvas,e));
+      sigRedraw(key);
+      const ctx2 = sigCtx[key];
+      ctx2.beginPath(); ctx2.moveTo(live[0].x, live[0].y);
+      for(let i=1;i<live.length;i++) ctx2.lineTo(live[i].x, live[i].y);
+      ctx2.strokeStyle='#122A4A'; ctx2.lineWidth=2.2; ctx2.lineCap='round'; ctx2.lineJoin='round'; ctx2.stroke();
+    };
+    const finish = async ()=>{
+      if(live && live.length>1){
+        state.currentPlan.signatures[key].paths.push(live);
+        // For reusable pads (staff/leader own signature), keep the account's
+        // saved signature in sync so it's reused automatically next time.
+        if(PAD_OWNER_ROLE[key] && isMine){
+          const wasEmpty = !hasStrokes(state.profile.signature);
+          const copy = JSON.parse(JSON.stringify(state.currentPlan.signatures[key]));
+          if(!copy.name) copy.name = state.profile.name;
+          state.profile.signature = copy;
+          await saveProfile(state.profile);
+          if(wasEmpty) showToast('Đã lưu chữ ký của bạn — tự động dùng lại cho các phương án sau');
+        }
+      }
+      live = null;
+      sigRedraw(key);
+    };
+    canvas.onpointerup = finish;
+    canvas.onpointerleave = finish;
+  });
+  document.querySelectorAll('[data-sigclear]').forEach(btn=>{
+    btn.onclick = ()=>{
+      const key = btn.dataset.sigclear;
+      const ownerRole = PAD_OWNER_ROLE[key];
+      if(ownerRole){
+        openConfirm('Xóa chữ ký đã lưu cho tài khoản này và ký lại từ đầu?', async ()=>{
+          state.currentPlan.signatures[key] = {paths:[], name:''};
+          state.profile.signature = {paths:[], name:''};
+          await saveProfile(state.profile);
+        });
+      } else {
+        openConfirm('Xóa chữ ký này?', ()=>{ state.currentPlan.signatures[key].paths = []; });
+      }
+    };
+  });
+  document.querySelectorAll('[data-signame]').forEach(inp=>{
+    inp.oninput = e=>{ state.currentPlan.signatures[inp.dataset.signame].name = e.target.value; };
+  });
+}
+
+function bindDetailEvents(){
+  initSignaturePads();
+  const editBtn = document.getElementById('btn-edit-plan');
+  if(editBtn) editBtn.onclick = ()=>{ state.route='form'; render(); };
+  const printBtn = document.getElementById('btn-print-plan');
+  if(printBtn) printBtn.onclick = tryPrint;
+  const copyBtn = document.getElementById('btn-copy-plan');
+  if(copyBtn) copyBtn.onclick = copyPlanText;
+  const approveBtn = document.getElementById('btn-approve');
+  if(approveBtn) approveBtn.onclick = async ()=>{
+    const note = document.getElementById('leader-note-input').value;
+    state.currentPlan.status='approved';
+    state.currentPlan.approved_by = state.profile.name;
+    state.currentPlan.approved_at = nowISO();
+    state.currentPlan.leader_note = note;
+    state.currentPlan.updated_at = nowISO();
+    ensureSignatures(state.currentPlan);
+    applyOwnerSignature('duyet');
+    await savePlanFull(state.currentPlan);
+    showToast('Đã duyệt phương án');
+    state.route='leaderList'; render();
+  };
+  const rejectBtn = document.getElementById('btn-reject');
+  if(rejectBtn) rejectBtn.onclick = async ()=>{
+    const note = document.getElementById('leader-note-input').value;
+    if(!note || !note.trim()){ showToast('Vui lòng nhập lý do từ chối'); return; }
+    state.currentPlan.status='rejected';
+    state.currentPlan.approved_by = state.profile.name;
+    state.currentPlan.approved_at = nowISO();
+    state.currentPlan.leader_note = note;
+    state.currentPlan.updated_at = nowISO();
+    await savePlanFull(state.currentPlan);
+    showToast('Đã từ chối phương án');
+    state.route='leaderList'; render();
+  };
+}
+
+/* ======================= GLOBAL BINDINGS ======================= */
+function bindGlobal(){
+  document.querySelectorAll('[data-nav]').forEach(el=>{
+    el.onclick = ()=>{ state.route = el.dataset.nav; render(); };
+  });
+  const newBtn = document.getElementById('fab-new');
+  if(newBtn) newBtn.onclick = openNewPlan;
+  const newBtn2 = document.querySelector('[data-newplan]');
+  if(newBtn2) newBtn2.onclick = openNewPlan;
+
+  document.querySelectorAll('[data-open]').forEach(el=>{
+    el.onclick = async ()=>{
+      state.syncing = true; render();
+      const plan = await loadPlan(el.dataset.open);
+      state.syncing = false;
+      if(!plan){ showToast('Không tải được phương án'); render(); return; }
+      state.currentPlan = plan;
+      state.route = 'detail';
+      render();
+    };
+  });
+
+  const logoutChip = document.getElementById('btn-logout');
+  if(logoutChip) logoutChip.onclick = ()=>{
+    openConfirm('Đổi người dùng trên thiết bị này? Bạn sẽ cần đăng nhập lại.', async ()=>{
+      await clearProfile();
+      state.profile = null;
+      state.route = 'onboard';
+      state.onboardDraft = {name:"",role:"staff",pin:""};
+    });
+  };
+
+  const statusFilters = document.querySelectorAll('[data-filter]');
+  statusFilters.forEach(el=>{
+    el.onclick = ()=>{ state.filterStatus = el.dataset.filter; render(); };
+  });
+  const staffFilter = document.getElementById('staff-filter');
+  if(staffFilter) staffFilter.onchange = e=>{ state.filterStaff = e.target.value; render(); };
+
+  if(state.route==='form') bindFormEvents();
+  if(state.route==='detail') bindDetailEvents();
+}
+
+function openNewPlan(){
+  state.currentPlan = blankPlan();
+  state.route = 'form';
+  render();
+}
+
+/* ======================= UTIL ======================= */
+function escapeHtml(str){
+  if(str===undefined||str===null) return '';
+  return String(str).replace(/[&<>"']/g, m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+}
+function escapeXml(str){ return escapeHtml(str); }
+
+boot();
 </script>
-
 </body>
 </html>
